@@ -137,6 +137,11 @@ h1 { margin: 0; font-size: 32px; line-height: 1.2; font-weight: 700; text-wrap: 
 .shelf.c1 { grid-template-columns: minmax(0, 1fr) !important; }
 .shelf.c2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
 .shelf.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+/* Routine catalog: exactly three rows per screen, the rest scrolls */
+.shelf.rows3 { --g: 24px; gap: var(--g); grid-auto-rows: calc((100% - 2 * var(--g)) / 3); overflow-y: auto; overscroll-behavior: contain; scroll-snap-type: y proximity; padding: 2px; margin: -2px; }
+.shelf.rows3 > * { scroll-snap-align: start; }
+.shelf.c4 { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
+.shelf.c4 .bt { font-size: 20px; }
 
 /* ---------- Chi gioca? ---------- */
 .who { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(var(--n, 2), minmax(0, 1fr)); grid-template-rows: minmax(0, 1fr); gap: 32px; align-items: center; }
@@ -347,12 +352,21 @@ textarea.ta::placeholder { color: var(--ink-3); }
 .kid.add .note { font-size: 15px; font-weight: 500; max-width: 260px; }
 .player.add .nm { font-size: 20px; color: var(--ink); }
 h2.sect { margin: 16px 0 0; font-size: 22px; }
-/* Tab bar – only in mom mode, so the child never meets five small targets */
-.tabbar { flex: none; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin-inline: -40px; padding: 10px 40px calc(12px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--nav); background: #FFFFFF; }
-.tab { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 4px; border-radius: 16px; font-size: 15px; font-weight: 700; color: var(--ink-2); }
+/* Floating dock – only in mom mode, so the child never meets five small targets.
+   One white panel above the content, centred; the page keeps a bottom padding so nothing hides under it. */
+.mom { position: relative; }
+.mom .mom-body { padding-bottom: calc(var(--dock-h) + var(--dock-gap) + 24px); }
+:root { --dock-h: 80px; --dock-gap: 16px; --dock-ink: #3F7A55; }
+.tabbar { position: absolute; left: 50%; bottom: calc(var(--dock-gap) + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 4;
+  width: max-content; max-width: calc(100% - 32px); height: var(--dock-h); display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: center; gap: 4px;
+  padding: 8px; border-radius: 999px; background: #FFFFFF; border: 1px solid rgba(62,76,67,.08); box-shadow: 0 6px 20px rgba(62,76,67,.10); }
+/* Dock items behave like every other button: flat until chosen; the chosen one is a pill with the shared soft 3D */
+.tab { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-width: 84px; height: 100%; padding: 6px 10px; border-radius: 999px;
+  font-size: 13px; font-weight: 600; line-height: 1.1; color: var(--ink-2); transition: background-color 120ms ease, box-shadow 90ms ease, transform 90ms ease; }
 .tab svg { width: 24px; height: 24px; }
-.tab[aria-current="page"] { background: var(--nav); color: var(--ink); }
-
+.tab:active { transform: translateY(1px); box-shadow: var(--b3d-pressed); }
+.tab[aria-current="page"] { background: var(--p-green); color: var(--dock-ink); font-weight: 800; box-shadow: var(--b3d); }
+.tab[aria-current="page"]:active { box-shadow: var(--b3d-pressed); }
 .fmt { position: fixed; top: calc(12px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); display: flex; gap: 4px; padding: 4px; border-radius: 999px; background: #FFFFFF; box-shadow: 0 1px 4px rgba(62,76,67,.15); z-index: 5; }
 .fmt button { padding: 8px 14px; border-radius: 999px; font-size: 14px; font-weight: 700; color: var(--ink-2); white-space: nowrap; box-shadow: none; }
 .fmt button[aria-pressed="true"] { background: var(--nav); color: var(--ink); }
@@ -472,14 +486,14 @@ const T = {
     library: "Torna alla libreria", listen: "Ascolta", prev: "Pagina precedente", next: "Pagina successiva",
     soon: "Presto", toRoutines: "Torna alle routine", now: "Adesso", finito: "Finito!", again: "Ricomincia", markDone: "Segna come fatto", isDone: "Fatto", noRoutines: "Oggi niente routine",
     routines: {
-      mattina: { name: "La mia mattina", steps: ["Mi sveglio", "Faccio colazione", "Lavo i denti", "Mi siedo nel passeggino"] },
+      mattina: { name: "La mia mattina", steps: ["Mi sveglio", "Rifaccio il letto", "Lavo i denti", "Lavo le mani", "Mi asciugo le mani"] },
       scuola: { name: "Vado a scuola", steps: ["Mi vesto", "Metto le scarpe", "Metto la giacca", "Mi siedo nel passeggino"] },
-      passeggio: { name: "Andiamo a passeggio", steps: ["Metto le scarpe", "Metto la giacca", "Prendo il mio gioco", "Mi siedo nel passeggino"] },
-      casa: { name: "Torno a casa", steps: ["Tolgo le scarpe", "Lavo le mani", "Ceno", "Gioco"] },
+      passeggio: { name: "Andiamo a passeggio", steps: ["Metto le scarpe", "Metto la giacca", "Prendo lo zaino", "Mi siedo nel passeggino"] },
+      casa: { name: "Torno a casa", steps: ["Andiamo alla fermata", "Saliamo sull'autobus", "Scendiamo dall'autobus", "Arriviamo a casa"] },
       pranzo: { name: "Il pranzo", steps: ["Lavo le mani", "Mi siedo a tavola", "Mangio la pasta", "Bevo l'acqua"] },
       logo: { name: "Andiamo dalla logopedista", short: "Logopedista", steps: ["Metto le scarpe", "Metto la giacca", "Mi siedo nel passeggino", "Gioco con la logopedista"] },
       fisio: { name: "Andiamo dalla fisioterapista", short: "Fisioterapista", steps: ["Metto le scarpe", "Metto la giacca", "Mi siedo nel passeggino", "Faccio gli esercizi"] },
-      nanna: { name: "La nanna", steps: ["Metto il pigiama", "Lavo i denti", "Leggiamo un libro", "Vado a letto"] }
+      nanna: { name: "La nanna", steps: ["Metto il pigiama", "Lavo i denti", "Lavo le mani", "Mi asciugo le mani"] }
     },
     bookNames: ["Gli animali del bosco", "Gli animali della fattoria", "La musica classica", "Gli animali del mare", "I mezzi di trasporto"],
     animals: [["La volpe", "Il lupo", "Il gufo", "Il picchio", "Il topo"], ["La mucca", "Il maiale", "Il cavallo", "Il gallo"], ["Gli strumenti", "Il pianoforte", "La chitarra", "Il violino", "Il tamburello", "Lo xilofono"], ["La balena", "Il delfino", "La conchiglia", "La tartaruga", "Il gabbiano"], ["Il trattore", "L'aereo", "La macchina", "La barca", "L'elicottero"]], voice: "it-IT"
@@ -490,14 +504,14 @@ const T = {
     library: "До бібліотеки", listen: "Слухати", prev: "Попередня сторінка", next: "Наступна сторінка",
     soon: "Скоро", toRoutines: "До рутин", now: "Зараз", finito: "Готово!", again: "Почати знову", markDone: "Позначити виконаним", isDone: "Виконано", noRoutines: "Сьогодні без рутин",
     routines: {
-      mattina: { name: "Мій ранок", steps: ["Прокидаюся", "Снідаю", "Чищу зуби", "Сідаю у візочок"] },
+      mattina: { name: "Мій ранок", steps: ["Прокидаюся", "Застеляю ліжко", "Чищу зубки", "Мию ручки", "Витираю ручки"] },
       scuola: { name: "Їду до садочка", steps: ["Одягаюся", "Взуваюся", "Одягаю куртку", "Сідаю у візочок"] },
-      passeggio: { name: "Збираємося гуляти", steps: ["Взуваюся", "Одягаю куртку", "Беру іграшку", "Сідаю у візочок"] },
-      casa: { name: "Повертаюся додому", steps: ["Знімаю взуття", "Мию руки", "Вечеряю", "Граюся"] },
+      passeggio: { name: "Збираємося гуляти", steps: ["Взуваюся", "Одягаю куртку", "Беру рюкзачок", "Сідаю у візочок"] },
+      casa: { name: "Повертаюся додому", steps: ["Йдемо на зупинку", "Сідаємо в автобус", "Виходимо з автобуса", "Приходимо додому"] },
       pranzo: { name: "Обід", steps: ["Мию руки", "Сідаю за стіл", "Їм пасту", "П'ю воду"] },
       logo: { name: "Йдемо до логопеда", short: "Логопед", steps: ["Взуваюся", "Одягаю куртку", "Сідаю у візочок", "Граюся з логопедом"] },
       fisio: { name: "Йдемо до фізіотерапевта", short: "Фізіотерапевт", steps: ["Взуваюся", "Одягаю куртку", "Сідаю у візочок", "Роблю вправи"] },
-      nanna: { name: "Час спати", steps: ["Одягаю піжаму", "Чищу зуби", "Читаємо книжку", "Лягаю в ліжко"] }
+      nanna: { name: "Час спати", steps: ["Одягаю піжамку", "Чищу зубки", "Мию ручки", "Витираю ручки"] }
     },
     bookNames: ["Лісові тварини", "Тварини з ферми", "Класична музика", "Морські тварини", "Транспорт"],
     animals: [["Лисичка", "Вовк", "Сова", "Дятел", "Мишка"], ["Корова", "Свинка", "Конячка", "Півник"], ["Інструменти", "Піаніно", "Гітара", "Скрипка", "Бубон", "Ксилофон"], ["Кит", "Дельфін", "Мушля", "Черепаха", "Чайка"], ["Трактор", "Літак", "Машинка", "Кораблик", "Вертоліт"]], voice: "uk-UA"
@@ -687,6 +701,11 @@ const I = {
   play: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg>',
   gear: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="15" cy="7" r="2.2" stroke="currentColor" stroke-width="2"/><circle cx="9" cy="17" r="2.2" stroke="currentColor" stroke-width="2"/></svg>',
   calAdd: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14" rx="3" stroke="currentColor" stroke-width="2"/><path d="M4 10h16M9 3.5v4M15 3.5v4M12 12.5v5M9.5 15h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  fOggi: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="5" fill="currentColor"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  fCal: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="3.5" fill="currentColor"/><path d="M9 3.5v4M15 3.5v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4 10h16" style="stroke:var(--p-green)" stroke-width="1.8"/><circle cx="8.5" cy="14.5" r="1.3" style="fill:var(--p-green)"/><circle cx="12" cy="14.5" r="1.3" style="fill:var(--p-green)"/></svg>',
+  fDiario: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="3" fill="currentColor"/><path d="M9 8.5h6M9 12h6M9 15.5h4" style="stroke:var(--p-green)" stroke-width="2" stroke-linecap="round"/></svg>',
+  fRoutine: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3.5" width="5.5" height="5.5" rx="1.8" fill="currentColor"/><rect x="3" y="9.25" width="5.5" height="5.5" rx="1.8" fill="currentColor"/><rect x="3" y="15" width="5.5" height="5.5" rx="1.8" fill="currentColor"/><path d="m4.3 6.3.9.9 1.7-1.8M4.3 12l.9.9 1.7-1.8M4.3 17.8l.9.9 1.7-1.8" style="stroke:var(--p-green)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M11.5 6.25h9M11.5 12h9M11.5 17.75h9" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>',
+  fKids: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="9" cy="8" r="4" fill="currentColor"/><circle cx="17" cy="9.5" r="3" fill="currentColor"/><path d="M2.5 20c.5-3.8 3.1-5.8 6.5-5.8s6 2 6.5 5.8z" fill="currentColor"/><path d="M16.5 14.2c2.9-.2 5 1.5 5.5 5.8h-4.6c-.2-2.4-.6-4.3-.9-5.8z" fill="currentColor"/></svg>',
   tOggi: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
   tCal: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14" rx="3" stroke="currentColor" stroke-width="2"/><path d="M4 10h16M9 3.5v4M15 3.5v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
   tDiario: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5.5" y="3.5" width="13" height="17" rx="2.5" stroke="currentColor" stroke-width="2"/><path d="M9 8.5h6M9 12h6M9 15.5h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
@@ -699,14 +718,14 @@ const toast = (msg) => { const t = $("toast"); t.textContent = msg; t.classList.
 /* ---------- La mia giornata: routines and their schedule ---------- */
 // Days: 1 = Monday … 7 = Sunday. Therapy times are Nina's real schedule; the rest is an example that mom changes.
 const ROUTINES = [
-  { id: "mattina", tint: "#FBF3DC", cover: "sun", steps: [{ img: "wake", tint: "#FBF3DC" }, { img: "breakfast", tint: "#FBECE4" }, { img: "teeth", tint: "#E5F1F7" }, { img: "stroller", tint: "#E9F3E5" }] },
+  { id: "mattina", tint: "#FBF3DC", cover: "sun", steps: [{ img: "wake", tint: "#FBF3DC" }, { img: "makebed", tint: "#F1EBF8" }, { img: "teeth", tint: "#E5F1F7" }, { img: "hands", tint: "#E9F3E5" }, { img: "towel", tint: "#FBECE4" }] },
   { id: "scuola", tint: "#E5F1F7", cover: "school", coverSize: "116% auto", skipIf: ["logo", "fisio"], steps: [{ img: "dress", tint: "#F1EBF8" }, { img: "shoes", tint: "#FBF3DC" }, { img: "jacket", tint: "#E5F1F7" }, { img: "stroller", tint: "#E9F3E5" }] },
   { id: "logo", tint: "#E5F2F8", cover: "blocks", therapy: true, steps: [{ img: "shoes", tint: "#FBF3DC" }, { img: "jacket", tint: "#E5F1F7" }, { img: "stroller", tint: "#E9F3E5" }, { img: "blocks", tint: "#E5F2F8" }] },
   { id: "fisio", tint: "#FBECE4", cover: "teddy", therapy: true, steps: [{ img: "shoes", tint: "#FBF3DC" }, { img: "jacket", tint: "#E5F1F7" }, { img: "stroller", tint: "#E9F3E5" }, { img: "exercise", tint: "#FBECE4" }] },
   { id: "pranzo", tint: "#E5F1F7", cover: "lunch", coverSize: "106% auto", steps: [{ img: "hands", tint: "#E5F1F7" }, { img: "chair", tint: "#FBF3DC" }, { img: "pasta", tint: "#FBECE4" }, { img: "water", tint: "#E9F3E5" }] },
-  { id: "passeggio", tint: "#E9F3E5", cover: "park", coverSize: "112% auto", steps: [{ img: "shoes", tint: "#FBF3DC" }, { img: "jacket", tint: "#E5F1F7" }, { img: "toy", tint: "#FBECE4" }, { img: "stroller", tint: "#E9F3E5" }] },
-  { id: "casa", tint: "#FBECE4", cover: "house", coverSize: "104% auto", steps: [{ img: "shoesoff", tint: "#FBF3DC" }, { img: "hands", tint: "#E5F1F7" }, { img: "dinner", tint: "#E9F3E5" }, { img: "play", tint: "#F1EBF8" }] },
-  { id: "nanna", tint: "#E8EAF6", cover: "moon", coverSize: "106% auto", steps: [{ img: "pajamas", tint: "#E8EAF6" }, { img: "teeth", tint: "#E5F1F7" }, { img: "readbook", tint: "#FBF3DC" }, { img: "bed", tint: "#F1EBF8" }] },
+  { id: "passeggio", tint: "#E9F3E5", cover: "park", coverSize: "112% auto", steps: [{ img: "shoes", tint: "#FBF3DC" }, { img: "jacket", tint: "#E5F1F7" }, { img: "backpack", tint: "#FBECE4" }, { img: "stroller", tint: "#E9F3E5" }] },
+  { id: "casa", tint: "#FBECE4", cover: "house", coverSize: "104% auto", steps: [{ img: "busstop", tint: "#FBF3DC" }, { img: "bus", tint: "#E5F1F7" }, { img: "busoff", tint: "#E9F3E5" }, { img: "house", tint: "#FBECE4" }] },
+  { id: "nanna", tint: "#E8EAF6", cover: "moon", coverSize: "106% auto", steps: [{ img: "pajamas", tint: "#E8EAF6" }, { img: "teeth", tint: "#E5F1F7" }, { img: "hands", tint: "#E9F3E5" }, { img: "towel", tint: "#FBECE4" }] },
 ];
 const RBY = Object.fromEntries(ROUTINES.map(r => [r.id, r]));
 const every = t => [1, 2, 3, 4, 5, 6, 7].map(d => ({ d, t }));
@@ -725,13 +744,20 @@ const DEFAULT_SCHED = {
   igor: {}
 };
 Object.assign(ART, {
+  // Temporary flat placeholders for the new steps, until the 3D assets are ready
+  makebed: '<svg viewBox="0 0 200 170"><rect x="14" y="54" width="18" height="104" rx="8" fill="#B4BAC4"/><rect x="168" y="86" width="18" height="72" rx="8" fill="#B4BAC4"/><rect x="24" y="96" width="152" height="46" rx="12" fill="#9CC5A1"/><path d="M24 112h152" stroke="#7FB685" stroke-width="4"/><rect x="34" y="78" width="46" height="24" rx="12" fill="#FFFFFF" stroke="#D9DED9" stroke-width="3"/></svg>',
+  towel: '<svg viewBox="0 0 200 170"><rect x="30" y="26" width="140" height="12" rx="6" fill="#B4BAC4"/><path d="M54 38h92v108a10 10 0 0 1-10 10H64a10 10 0 0 1-10-10z" fill="#F2A97E"/><path d="M54 120h92M54 132h92" stroke="#FFFFFF" stroke-width="5"/></svg>',
+  busstop: '<svg viewBox="0 0 200 170"><rect x="52" y="30" width="10" height="128" rx="4" fill="#8E949E"/><circle cx="57" cy="40" r="26" fill="#6FA8DC"/><path d="M45 32h24v16H45z" fill="#FFFFFF"/><rect x="92" y="112" width="84" height="12" rx="5" fill="#B98F6A"/><rect x="100" y="124" width="8" height="32" rx="3" fill="#8E5536"/><rect x="160" y="124" width="8" height="32" rx="3" fill="#8E5536"/><rect x="0" y="156" width="200" height="14" fill="#DCE3DE"/></svg>',
+  bus: '<svg viewBox="0 0 200 170"><rect x="14" y="40" width="172" height="92" rx="18" fill="#F6C453"/><rect x="28" y="54" width="34" height="32" rx="6" fill="#DCEEF8"/><rect x="72" y="54" width="34" height="32" rx="6" fill="#DCEEF8"/><rect x="116" y="54" width="34" height="32" rx="6" fill="#DCEEF8"/><rect x="158" y="54" width="18" height="62" rx="5" fill="#B9DBF0"/><rect x="14" y="100" width="172" height="8" fill="#E2A93B"/><g fill="#3E4C43"><circle cx="54" cy="134" r="16"/><circle cx="146" cy="134" r="16"/></g><g fill="#DCE3DE"><circle cx="54" cy="134" r="6"/><circle cx="146" cy="134" r="6"/></g></svg>',
+  busoff: '<svg viewBox="0 0 200 170"><rect x="6" y="40" width="130" height="92" rx="18" fill="#F6C453"/><rect x="20" y="54" width="34" height="32" rx="6" fill="#DCEEF8"/><rect x="64" y="54" width="34" height="32" rx="6" fill="#DCEEF8"/><rect x="108" y="54" width="22" height="70" rx="5" fill="#5E6B62"/><g fill="#3E4C43"><circle cx="42" cy="134" r="16"/></g><circle cx="42" cy="134" r="6" fill="#DCE3DE"/><path d="M140 100h40M166 86l14 14-14 14" fill="none" stroke="#4B8660" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  backpack: '<svg viewBox="0 0 200 170"><path d="M76 40c0-16 48-16 48 0" fill="none" stroke="#4F86BE" stroke-width="10" stroke-linecap="round"/><rect x="50" y="38" width="100" height="120" rx="28" fill="#6FA8DC"/><rect x="66" y="96" width="68" height="46" rx="12" fill="#4F86BE"/><rect x="88" y="90" width="24" height="10" rx="4" fill="#F6C453"/></svg>',
   blocks: '<svg viewBox="0 0 200 170"><rect x="70" y="22" width="56" height="56" rx="10" fill="#F6C453"/><rect x="34" y="84" width="60" height="60" rx="12" fill="#E88B8B"/><rect x="100" y="84" width="60" height="60" rx="12" fill="#6FA8DC"/><circle cx="166" cy="118" r="26" fill="#7FB685"/></svg>',
   teddy: '<svg viewBox="0 0 200 170"><circle cx="66" cy="40" r="20" fill="#B98F6A"/><circle cx="134" cy="40" r="20" fill="#B98F6A"/><circle cx="66" cy="40" r="10" fill="#E8C9A6"/><circle cx="134" cy="40" r="10" fill="#E8C9A6"/><ellipse cx="100" cy="128" rx="54" ry="40" fill="#C9A07A"/><circle cx="100" cy="70" r="44" fill="#C9A07A"/><ellipse cx="100" cy="84" rx="18" ry="13" fill="#E8C9A6"/><circle cx="84" cy="64" r="5" fill="#3A3328"/><circle cx="116" cy="64" r="5" fill="#3A3328"/><circle cx="100" cy="79" r="5" fill="#3A3328"/><ellipse cx="100" cy="132" rx="26" ry="22" fill="#E8C9A6"/></svg>',
   exercise: '<svg viewBox="0 0 200 170"><ellipse cx="100" cy="154" rx="78" ry="10" fill="#DCE3DE"/><circle cx="100" cy="88" r="64" fill="#7FB8E0"/><path d="M42 70c30 14 86 14 116 0" stroke="#FFFFFF" stroke-width="8" fill="none" stroke-linecap="round"/><path d="M48 116c28-12 76-12 104 0" stroke="#5E9ACB" stroke-width="8" fill="none" stroke-linecap="round"/></svg>'
 });
 
 /* ---------- Profiles and saved state ---------- */
-const ST_KEY = "imm-v3";
+const ST_KEY = "imm-v4";
 let st = {
   kids: [
     { id: "ostap", name: "Ostap", av: "ostap", tint: "#FBF3DC", lang: "it", img: true }
@@ -844,9 +870,13 @@ function renderPage() {
 let rId = "mattina", preview = false;
 function buildRoutineList() {
   const list = $("routine-list"); list.innerHTML = "";
-  const d = today(), items = routinesOn(kidId, d), cur = currentOf(kidId, d, items);
+  // For now the child sees every routine of the profile (Nina's choice); today's current one keeps «Adesso»
+  // Speech therapy and physiotherapy cards are hidden from the child catalog for now (Nina's choice); mom mode still has them
+  const HIDDEN = ["logo", "fisio"];
+  const d = today(), items = kidRoutines(kidId).filter(r => !HIDDEN.includes(r.id)).map(r => ({ r })), cur = currentOf(kidId, d);
   const n = items.length || 1; const land = $("app").classList.contains("landscape");
-  list.className = "shelf " + (land ? (n <= 3 ? "c" + n : n === 4 ? "c2" : "c3") : (n <= 2 ? "c1" : "c2"));
+  // Three rows fit on the screen; the fourth and later rows scroll
+  list.className = "shelf rows3 " + (land ? (n <= 3 ? "c" + n : n === 4 ? "c2" : "c3") : (n <= 2 ? "c1" : "c2"));
   if (!items.length) { list.innerHTML = `<div class="book-tile soon" style="background:var(--card-warm)"><div class="cover"><span class="soon-tag">${T[lang].noRoutines}</span></div></div>`; return; }
   items.forEach(({ r }) => {
     const b = document.createElement("button"); b.className = "book-tile pressable" + (r.id === cur ? " current" : ""); b.style.background = r.tint;
@@ -904,8 +934,21 @@ function sayStep(i, pic) {
 function resetDay() { delete st.progress[pKey(kidId, today(), rId)]; save(); renderDay(false); }
 
 /* ---------- Mom mode ---------- */
+// Interface language of the parents' area (Impostazioni → Lingua). Default Italian.
+if (!st.ui) st.ui = "it";
+const L = (it, uk) => st.ui === "uk" ? uk : it;
+const D_ = {
+  it: { dn: DN, ds: DS, dl: DL, mn: MN },
+  uk: { dn: ["", "Понеділок", "Вівторок", "Середа", "Четвер", "Пʼятниця", "Субота", "Неділя"], ds: ["", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"], dl: ["", "П", "В", "С", "Ч", "П", "С", "Н"],
+        mn: ["січня", "лютого", "березня", "квітня", "травня", "червня", "липня", "серпня", "вересня", "жовтня", "листопада", "грудня"] }
+};
+const dn = i => D_[st.ui].dn[i], ds = i => D_[st.ui].ds[i], dl = i => D_[st.ui].dl[i], mn = i => D_[st.ui].mn[i];
+const longDateL = d => `${dn(dowOf(d))}, ${d.getDate()} ${mn(d.getMonth())}`;
+const rn = rid => rName(rid, st.ui);
+const noteWord = n => st.ui === "uk" ? (n === 1 ? "1 нотатка" : n + (n < 5 ? " нотатки" : " нотаток")) : (n === 1 ? "1 nota" : n + " note");
+
 let tab = "oggi", sub = null, momKid = "ostap", calDate = null, recorder = null, recChunks = [];
-const TABS = [["oggi", "Oggi", I.tOggi], ["cal", "Calendario", I.tCal], ["diario", "Diario", I.tDiario], ["routine", "Routine", I.tRoutine], ["bambini", "Bambini", I.tKids]];
+const TABS = () => [["oggi", L("Oggi", "Сьогодні"), I.tOggi, I.fOggi], ["cal", L("Calendario", "Календар"), I.tCal, I.fCal], ["diario", L("Diario", "Щоденник"), I.tDiario, I.fDiario], ["routine", L("Routine", "Рутини"), I.tRoutine, I.fRoutine], ["bambini", L("Bambini", "Діти"), I.tKids, I.fKids]];
 let lastChild = null;
 function openMom(fromChild) { lastChild = fromChild ? screen : null; momKid = kidId; tab = "oggi"; sub = null; calDate = today(); renderMom(); show("mom"); }
 function startPlay(id, rid) {
@@ -914,23 +957,28 @@ function startPlay(id, rid) {
 }
 function goTab(t) { tab = t; sub = null; if (t === "cal") calDate = today(); renderMom(); $("mom-body").scrollTop = 0; }
 function renderTabs() {
-  $("tabbar").innerHTML = TABS.map(([id, label, ic]) => `<button class="tab" data-tab="${id}" ${tab === id ? 'aria-current="page"' : ""}>${ic}<span>${label}</span></button>`).join("");
+  $("tabbar").innerHTML = TABS().map(([id, label, ic, fi]) => `<button class="tab" data-tab="${id}" ${tab === id && !(sub && sub.app) ? 'aria-current="page"' : ""}>${tab === id && !(sub && sub.app) ? fi : ic}<span>${label}</span></button>`).join("");
   $("tabbar").querySelectorAll(".tab").forEach(b => b.addEventListener("click", () => goTab(b.dataset.tab)));
 }
 function head({ title, subtitle, back, chip, extra }) {
   const h = $("mom-head");
-  h.innerHTML = `${back ? `<button class="navbtn round" id="m-back" aria-label="Indietro">${I.back}</button>` : ""}
+  const inSettings = sub && sub.app;
+  h.innerHTML = `${back ? `<button class="navbtn round" id="m-back" aria-label="${L("Indietro", "Назад")}">${I.back}</button>` : ""}
     <div class="titles"><h1>${esc(title)}</h1>${subtitle ? `<span class="sub">${esc(subtitle)}</span>` : ""}</div>
-    ${chip && st.kids.length > 1 ? `<button class="chip" id="m-chip" aria-label="Cambia bambino"><span class="av" style="background-image:${avUrl(kidBy(momKid))}"></span>${esc(kidBy(momKid).name)}${I.down}</button>` : ""}
+    ${chip && st.kids.length > 1 ? `<button class="chip" id="m-chip" aria-label="${L("Cambia bambino", "Змінити дитину")}"><span class="av" style="background-image:${avUrl(kidBy(momKid))}"></span>${esc(kidBy(momKid).name)}${I.down}</button>` : ""}
     ${extra || ""}
-    ${lastChild ? `<button class="plainbtn primary" id="m-play">${I.play}Torna al gioco</button>` : ""}`;
+    ${lastChild ? `<button class="plainbtn primary" id="m-play">${I.play}${L("Torna al gioco", "Назад до гри")}</button>` : ""}
+    ${inSettings ? "" : `<button class="navbtn round" id="m-set" aria-label="${L("Impostazioni", "Налаштування")}">${I.gear}</button>`}`;
   if (back) $("m-back").addEventListener("click", back);
   if ($("m-chip")) $("m-chip").addEventListener("click", () => { const i = st.kids.findIndex(k => k.id === momKid); momKid = st.kids[(i + 1) % st.kids.length].id; renderMom(); });
-  if ($("m-play")) $("m-play").addEventListener("click", () => { const back = lastChild; lastChild = null; useKid(kidId); if (back === "routines") buildRoutineList(); show(back || "home"); });
+  if ($("m-play")) $("m-play").addEventListener("click", () => { const b = lastChild; lastChild = null; useKid(kidId); if (b === "routines") buildRoutineList(); show(b || "home"); });
+  if ($("m-set")) $("m-set").addEventListener("click", () => { sub = { app: true }; renderMom(); $("mom-body").scrollTop = 0; });
 }
 function renderMom() {
+  document.documentElement.lang = st.ui;
   renderTabs();
   const body = $("mom-body");
+  if (sub && sub.app) return viewSettings(body);
   if (sub && sub.edit) return viewEditor(body, sub.edit);
   if (sub && sub.kid) return viewKid(body, sub.kid);
   ({ oggi: viewOggi, cal: viewCal, diario: viewDiario, routine: viewRoutines, bambini: viewKids })[tab](body);
@@ -938,34 +986,34 @@ function renderMom() {
 function dayRows(kidId_, date, opts = {}) {
   const items = routinesOn(kidId_, date); const isToday = keyOf(date) === keyOf(today());
   const cur = isToday ? currentOf(kidId_, date, items) : null;
-  if (!items.length) return `<div class="empty-note">Nessuna routine in questo giorno. Puoi aggiungerla in Routine.</div>`;
+  if (!items.length) return `<div class="empty-note">${L("Nessuna routine in questo giorno. Puoi aggiungerla in Routine.", "У цей день рутин немає. Додати можна у вкладці «Рутини».")}</div>`;
   return items.map(({ r, t }) => {
     const done = isDone(kidId_, date, r.id), sc = schedOf(kidId_, r.id);
-    const right = done ? `<span class="pill done"><i>${I.check}</i>Fatta</span>` : r.id === cur ? `<span class="pill now">Adesso</span>` : r.therapy && opts.appt ? `<span class="pill" style="background:var(--p-peach);color:#8A3B12">Appuntamento</span>` : sc.bell ? I.bell : "";
-    return `<button class="rowc" data-rid="${r.id}"><span class="tm ${done ? "past" : ""}">${t}</span><span class="thumb" style="${coverBG(r)}">${coverHTML(r)}</span><span class="nm">${esc(rName(r.id, "it"))}</span>${right}</button>`;
+    const right = done ? `<span class="pill done"><i>${I.check}</i>${L("Fatta", "Готово")}</span>` : r.id === cur ? `<span class="pill now">${L("Adesso", "Зараз")}</span>` : r.therapy && opts.appt ? `<span class="pill" style="background:var(--p-peach);color:#8A3B12">${L("Appuntamento", "Візит")}</span>` : sc.bell ? I.bell : "";
+    return `<button class="rowc" data-rid="${r.id}"><span class="tm ${done ? "past" : ""}">${t}</span><span class="thumb" style="${coverBG(r)}">${coverHTML(r)}</span><span class="nm">${esc(rn(r.id))}</span>${right}</button>`;
   }).join("");
 }
 const bindRows = el => el.querySelectorAll(".rowc[data-rid]").forEach(b => b.addEventListener("click", () => { sub = { edit: b.dataset.rid, from: tab }; renderMom(); }));
 function apptHTML(kidId_, date) {
   const ap = routinesOn(kidId_, date).filter(x => x.r.therapy);
-  if (!ap.length) return `<div class="empty-note">Nessun appuntamento oggi.</div>`;
-  return ap.map(({ r, t }) => `<div class="appt"><span class="tm">${t}</span><div><b>${T.it.routines[r.id].short}</b><small>Routine: ${esc(rName(r.id, "it"))}</small></div></div>${schedOf(kidId_, r.id).bell ? `<div class="bell">${I.bell.replace('class="ic"', "")}Promemoria sul telefono alle ${fromMin(toMin(t) - 10)}</div>` : ""}`).join("");
+  if (!ap.length) return `<div class="empty-note">${L("Nessun appuntamento oggi.", "Сьогодні візитів немає.")}</div>`;
+  return ap.map(({ r, t }) => `<div class="appt"><span class="tm">${t}</span><div><b>${T[st.ui].routines[r.id].short}</b><small>${L("Routine", "Рутина")}: ${esc(rn(r.id))}</small></div></div>${schedOf(kidId_, r.id).bell ? `<div class="bell">${I.bell.replace('class="ic"', "")}${L("Promemoria sul telefono alle", "Нагадування на телефон о")} ${fromMin(toMin(t) - 10)}</div>` : ""}`).join("");
 }
 const fromMin = m => `${pad2(Math.floor(m / 60))}:${pad2(m % 60)}`;
 function notesFor(kidId_, dateKey) { return st.notes.filter(n => n.kid === kidId_ && (!dateKey || n.date === dateKey)).sort((a, b) => b.ts - a.ts); }
 function noteHTML(n, withDate) {
   const k = kidBy(n.kid) || kid(); const d = new Date(n.ts);
-  return `<div class="noteitem"><span class="av" style="background-image:${avUrl(k)}"></span><div class="tx"><span class="meta">${withDate ? `${DS[dowOf(d)]} ${d.getDate()} ${MN[d.getMonth()]} · ` : ""}${pad2(d.getHours())}:${pad2(d.getMinutes())}${n.audio !== undefined ? " · Nota vocale" : ""}</span>${n.text ? esc(n.text) : ""}${n.audio ? `<audio controls src="${n.audio}"></audio>` : n.audio === null ? "<i>Audio non salvato in questa anteprima</i>" : ""}</div><button class="del" data-del="${n.id}" aria-label="Elimina nota">${I.trash}</button></div>`;
+  return `<div class="noteitem"><span class="av" style="background-image:${avUrl(k)}"></span><div class="tx"><span class="meta">${withDate ? `${ds(dowOf(d))} ${d.getDate()} ${mn(d.getMonth())} · ` : ""}${pad2(d.getHours())}:${pad2(d.getMinutes())}${n.audio !== undefined ? " · " + L("Nota vocale", "Голосова нотатка") : ""}</span>${n.text ? esc(n.text) : ""}${n.audio ? `<audio controls src="${n.audio}"></audio>` : n.audio === null ? `<i>${L("Audio non salvato in questa anteprima", "Аудіо не збережене в цьому прототипі")}</i>` : ""}</div><button class="del" data-del="${n.id}" aria-label="${L("Elimina nota", "Видалити нотатку")}">${I.trash}</button></div>`;
 }
 function bindNotes(el) { el.querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", () => { st.notes = st.notes.filter(n => n.id !== b.dataset.del); save(); renderMom(); })); }
 function composer(prefix) {
-  return `<textarea class="ta" id="${prefix}-ta" placeholder="Com'è andata oggi? Scrivi una nota o registra un messaggio vocale…"></textarea>
-    <div class="btnrow"><button class="plainbtn" id="${prefix}-save">${I.plus}Nuova nota</button><button class="plainbtn" id="${prefix}-mic">${I.mic}<span>Nota vocale</span></button></div>`;
+  return `<textarea class="ta" id="${prefix}-ta" placeholder="${L("Com'è andata oggi? Scrivi una nota o registra un messaggio vocale…", "Як минув день? Напиши нотатку або запиши голосову…")}"></textarea>
+    <div class="btnrow"><button class="plainbtn" id="${prefix}-save">${I.plus}${L("Nuova nota", "Нова нотатка")}</button><button class="plainbtn" id="${prefix}-mic">${I.mic}<span>${L("Nota vocale", "Голосова")}</span></button></div>`;
 }
 function bindComposer(prefix, date) {
   $(prefix + "-save").addEventListener("click", () => {
-    const v = $(prefix + "-ta").value.trim(); if (!v) { toast("Scrivi prima qualcosa"); return; }
-    st.notes.push({ id: "n" + Date.now(), kid: momKid, date: keyOf(date), ts: Date.now(), text: v }); save(); toast("Nota salvata"); renderMom();
+    const v = $(prefix + "-ta").value.trim(); if (!v) { toast(L("Scrivi prima qualcosa", "Спершу напиши щось")); return; }
+    st.notes.push({ id: "n" + Date.now(), kid: momKid, date: keyOf(date), ts: Date.now(), text: v }); save(); toast(L("Nota salvata", "Нотатку збережено")); renderMom();
   });
   $(prefix + "-mic").addEventListener("click", async () => {
     const btn = $(prefix + "-mic");
@@ -977,112 +1025,112 @@ function bindComposer(prefix, date) {
       recorder.onstop = () => {
         stream.getTracks().forEach(t => t.stop());
         const blob = new Blob(recChunks, { type: recorder.mimeType || "audio/webm" }); recorder = null;
-        const fr = new FileReader(); fr.onload = () => { st.notes.push({ id: "n" + Date.now(), kid: momKid, date: keyOf(date), ts: Date.now(), text: $(prefix + "-ta") ? $(prefix + "-ta").value.trim() : "", audio: fr.result }); save(); toast("Nota vocale salvata"); renderMom(); }; fr.readAsDataURL(blob);
+        const fr = new FileReader(); fr.onload = () => { st.notes.push({ id: "n" + Date.now(), kid: momKid, date: keyOf(date), ts: Date.now(), text: $(prefix + "-ta") ? $(prefix + "-ta").value.trim() : "", audio: fr.result }); save(); toast(L("Nota vocale salvata", "Голосову нотатку збережено")); renderMom(); }; fr.readAsDataURL(blob);
       };
-      recorder.start(); btn.querySelector("span").textContent = "Ferma"; btn.classList.add("rec");
-    } catch (e) { recorder = null; toast("Il microfono non è disponibile in questa anteprima"); }
+      recorder.start(); btn.querySelector("span").textContent = L("Ferma", "Зупинити"); btn.classList.add("rec");
+    } catch (e) { recorder = null; toast(L("Il microfono non è disponibile", "Мікрофон недоступний")); }
   });
 }
 function viewOggi(body) {
   const d = today(); const k = kidBy(momKid);
-  head({ title: "Oggi", subtitle: longDate(d) + (st.simDay ? " · giorno di prova" : ""), chip: true });
+  head({ title: L("Oggi", "Сьогодні"), subtitle: longDateL(d) + (st.simDay ? " · " + L("giorno di prova", "тестовий день") : ""), chip: true });
   const nn = notesFor(momKid, keyOf(d));
   const cur = currentOf(momKid, d); const curT = cur ? routinesOn(momKid, d).find(x => x.r.id === cur).t : "";
-  const players = st.kids.map(x => `<button class="player pressable" data-play="${x.id}" style="background:${x.tint}"><span class="face" style="background-image:${avUrl(x)}"></span><span class="nm">${esc(x.name)}<small>Libri sonori e giornata</small></span><span class="go">${I.play}</span></button>`).join("") + `<button class="player add" id="o-add"><span class="face">${I.plus}</span><span class="nm">Aggiungi un bambino<small>Un profilo per ogni figlio</small></span></button>`;
-  body.innerHTML = `<div class="box play"><h2>Chi gioca adesso?</h2><div class="players">${players}</div>
-      ${cur ? `<div class="nowbar"><span class="thumb" style="${coverBG(RBY[cur])}">${coverHTML(RBY[cur])}</span><span class="nm"><small>Adesso per ${esc(k.name)} · ${curT}</small>${esc(rName(cur, "it"))}</span><button class="plainbtn primary" id="o-open">${I.play}Apri la routine</button></div>` : ""}</div>
+  const players = st.kids.map(x => `<button class="player pressable" data-play="${x.id}" style="background:${x.tint}"><span class="face" style="background-image:${avUrl(x)}"></span><span class="nm">${esc(x.name)}<small>${L("Libri sonori e giornata", "Звукові книжечки й день")}</small></span><span class="go">${I.play}</span></button>`).join("") + `<button class="player add" id="o-add"><span class="face">${I.plus}</span><span class="nm">${L("Aggiungi un bambino", "Додати дитину")}<small>${L("Un profilo per ogni figlio", "Окремий профіль для кожної дитини")}</small></span></button>`;
+  body.innerHTML = `<div class="box play"><h2>${L("Chi gioca adesso?", "Хто зараз грає?")}</h2><div class="players">${players}</div>
+      ${cur ? `<div class="nowbar"><span class="thumb" style="${coverBG(RBY[cur])}">${coverHTML(RBY[cur])}</span><span class="nm"><small>${L("Adesso per", "Зараз для")} ${esc(k.name)} · ${curT}</small>${esc(rn(cur))}</span><button class="plainbtn primary" id="o-open">${I.play}${L("Apri la routine", "Відкрити рутину")}</button></div>` : ""}</div>
     <div class="cols">
-    <div class="box"><h2>Routine di oggi</h2>${dayRows(momKid, d)}</div>
+    <div class="box"><h2>${L("Routine di oggi", "Рутини на сьогодні")}</h2>${dayRows(momKid, d)}</div>
     <div style="display:grid;gap:24px">
-      <div class="box warm"><h2>Appuntamenti</h2>${apptHTML(momKid, d)}</div>
-      <div class="box"><h2>Diario</h2>${composer("o")}${nn.length ? `<button class="plainbtn sm onnav" id="o-all">${nn.length === 1 ? "1 nota" : nn.length + " note"} di oggi · Apri il diario</button>` : ""}</div>
+      <div class="box warm"><h2>${L("Appuntamenti", "Візити")}</h2>${apptHTML(momKid, d)}</div>
+      <div class="box"><h2>${L("Diario", "Щоденник")}</h2>${composer("o")}${nn.length ? `<button class="plainbtn sm onnav" id="o-all">${noteWord(nn.length)} ${L("di oggi · Apri il diario", "за сьогодні · Відкрити щоденник")}</button>` : ""}</div>
     </div></div>`;
   bindRows(body); bindComposer("o", d);
-  $("o-add").addEventListener("click", () => toast("Aggiungere un profilo – nel prossimo passo"));
+  $("o-add").addEventListener("click", () => toast(L("Aggiungere un profilo – nel prossimo passo", "Додавання профілю – на наступному кроці")));
   body.querySelectorAll("[data-play]").forEach(b => b.addEventListener("click", () => startPlay(b.dataset.play)));
   if ($("o-open")) $("o-open").addEventListener("click", () => startPlay(momKid, cur));
   if ($("o-all")) $("o-all").addEventListener("click", () => goTab("diario"));
 }
 function viewCal(body) {
   const sel = calDate || today(); const mon = addDays(sel, 1 - dowOf(sel));
-  head({ title: "Calendario", subtitle: `${kidBy(momKid).name} · settimana dal ${mon.getDate()} ${MN[mon.getMonth()]}`, chip: true });
+  head({ title: L("Calendario", "Календар"), subtitle: `${kidBy(momKid).name} · ${L("settimana dal", "тиждень з")} ${mon.getDate()} ${mn(mon.getMonth())}`, chip: true });
   const tk = keyOf(today());
-  let week = `<button class="mini" id="c-prev" aria-label="Settimana precedente">${I.chevL}</button>`;
+  let week = `<button class="mini" id="c-prev" aria-label="${L("Settimana precedente", "Попередній тиждень")}">${I.chevL}</button>`;
   for (let i = 0; i < 7; i++) {
     const d = addDays(mon, i); const items = routinesOn(momKid, d);
-    week += `<button class="wd ${keyOf(d) === tk ? "today" : ""}" data-d="${keyOf(d)}" aria-pressed="${keyOf(d) === keyOf(sel)}"><span class="d">${DS[i + 1]}</span><span class="n">${d.getDate()}</span><span class="dots">${items.map(x => `<i class="${x.r.therapy ? "ap" : ""}"></i>`).join("")}</span></button>`;
+    week += `<button class="wd ${keyOf(d) === tk ? "today" : ""}" data-d="${keyOf(d)}" aria-pressed="${keyOf(d) === keyOf(sel)}"><span class="d">${ds(i + 1)}</span><span class="n">${d.getDate()}</span><span class="dots">${items.map(x => `<i class="${x.r.therapy ? "ap" : ""}"></i>`).join("")}</span></button>`;
   }
-  week += `<button class="mini" id="c-next" aria-label="Settimana successiva">${I.chevRb}</button>`;
+  week += `<button class="mini" id="c-next" aria-label="${L("Settimana successiva", "Наступний тиждень")}">${I.chevRb}</button>`;
   const nn = notesFor(momKid, keyOf(sel));
   body.innerHTML = `<div class="week">${week}</div>
-    <div class="cols"><div class="box"><h2>${longDate(sel)}</h2>${dayRows(momKid, sel, { appt: true })}</div>
-    <div class="box warm"><h2>Note del giorno</h2><div class="notes">${nn.length ? nn.map(n => noteHTML(n)).join("") : `<div class="empty-note">Nessuna nota in questo giorno.</div>`}</div></div></div>
-    <div class="note" style="font-size:15px;color:var(--ink-2)">Punti verdi – routine, arancioni – appuntamenti. Le routine con un orario compaiono qui da sole.</div>`;
+    <div class="cols"><div class="box"><h2>${longDateL(sel)}</h2>${dayRows(momKid, sel, { appt: true })}</div>
+    <div class="box warm"><h2>${L("Note del giorno", "Нотатки дня")}</h2><div class="notes">${nn.length ? nn.map(n => noteHTML(n)).join("") : `<div class="empty-note">${L("Nessuna nota in questo giorno.", "У цей день нотаток немає.")}</div>`}</div></div></div>
+    <div class="note" style="font-size:15px;color:var(--ink-2)">${L("Punti verdi – routine, arancioni – appuntamenti. Le routine con un orario compaiono qui da sole.", "Сірі точки – рутини, помаранчеві – візити. Рутини з розкладом з'являються тут самі.")}</div>`;
   body.querySelectorAll(".wd").forEach(b => b.addEventListener("click", () => { const [y, m, dd] = b.dataset.d.split("-").map(Number); calDate = new Date(y, m - 1, dd, 12); renderMom(); }));
   $("c-prev").addEventListener("click", () => { calDate = addDays(sel, -7); renderMom(); });
   $("c-next").addEventListener("click", () => { calDate = addDays(sel, 7); renderMom(); });
   bindRows(body); bindNotes(body);
 }
 function viewDiario(body) {
-  head({ title: "Diario", subtitle: `Note su ${kidBy(momKid).name}`, chip: true });
+  head({ title: L("Diario", "Щоденник"), subtitle: `${L("Note su", "Нотатки про")} ${kidBy(momKid).name}`, chip: true });
   const nn = notesFor(momKid);
-  body.innerHTML = `<div class="cols even"><div class="box"><h2>Nuova nota · ${longDate(today())}</h2>${composer("d")}<div class="note">Qui va quello che noti: «oggi ha premuto da solo la volpe tre volte». Le note restano legate al giorno e si vedono anche nel Calendario.</div></div>
-    <div class="box warm"><h2>Tutte le note</h2><div class="notes">${nn.length ? nn.map(n => noteHTML(n, true)).join("") : `<div class="empty-note">Ancora nessuna nota.</div>`}</div></div></div>`;
+  body.innerHTML = `<div class="cols even"><div class="box"><h2>${L("Nuova nota", "Нова нотатка")} · ${longDateL(today())}</h2>${composer("d")}<div class="note">${L("Qui va quello che noti: «oggi ha premuto da solo la volpe tre volte». Le note restano legate al giorno e si vedono anche nel Calendario.", "Сюди – те, що помічаєш: «сьогодні сам натиснув лисичку тричі». Нотатки прив'язані до дня і видні в Календарі.")}</div></div>
+    <div class="box warm"><h2>${L("Tutte le note", "Усі нотатки")}</h2><div class="notes">${nn.length ? nn.map(n => noteHTML(n, true)).join("") : `<div class="empty-note">${L("Ancora nessuna nota.", "Нотаток ще немає.")}</div>`}</div></div></div>`;
   bindComposer("d", today()); bindNotes(body);
 }
 function schedText(sc) {
-  const s = sc.slots; if (!s.length) return "Nessun giorno";
-  const ds = s.map(x => x.d).sort((a, b) => a - b); const same = s.every(x => x.t === s[0].t);
-  const range = arr => { if (arr.length === 7) return "Ogni giorno"; const run = arr.every((v, i) => !i || v === arr[i - 1] + 1); return run && arr.length > 2 ? `${DS[arr[0]]}–${DS[arr[arr.length - 1]]}` : arr.map(d => DS[d]).join(", "); };
-  if (same) return `${range(ds)} · ${s[0].t}`;
-  return s.slice().sort((a, b) => a.d - b.d).map(x => `${DS[x.d]} ${x.t}`).join(" · ");
+  const s = sc.slots; if (!s.length) return L("Nessun giorno", "Без днів");
+  const dd = s.map(x => x.d).sort((a, b) => a - b); const same = s.every(x => x.t === s[0].t);
+  const range = arr => { if (arr.length === 7) return L("Ogni giorno", "Щодня"); const run = arr.every((v, i) => !i || v === arr[i - 1] + 1); return run && arr.length > 2 ? `${ds(arr[0])}–${ds(arr[arr.length - 1])}` : arr.map(d => ds(d)).join(", "); };
+  if (same) return `${range(dd)} · ${s[0].t}`;
+  return s.slice().sort((a, b) => a.d - b.d).map(x => `${ds(x.d)} ${x.t}`).join(" · ");
 }
 function viewRoutines(body) {
   const list = kidRoutines(momKid);
-  head({ title: "Routine", subtitle: `${kidBy(momKid).name} · ${list.length} routine`, chip: true, extra: `<button class="plainbtn primary" id="r-new">${I.plus}Nuova routine</button>` });
-  $("r-new").addEventListener("click", () => toast("Creare una routine nuova – nel prossimo passo"));
-  body.innerHTML = list.length ? `<div class="grid2">${list.map(r => { const sc = schedOf(momKid, r.id); return `<button class="rt" data-rid="${r.id}"><span class="thumb lg" style="${coverBG(r)};background-color:${art(r.cover) ? r.tint : "#FFFFFF"}">${coverHTML(r)}</span><span class="nm">${esc(rName(r.id, "it"))}<small>${schedText(sc)}</small></span>${sc.bell ? I.bell : ""}${I.chevR}</button>`; }).join("")}</div>`
-    : `<div class="box"><h2>${kidBy(momKid).name} non ha ancora routine</h2><div class="note">Le routine si creano qui: passi con le immagini, giorni e ora. Nel prossimo passo del prototipo.</div></div>`;
+  head({ title: L("Routine", "Рутини"), subtitle: `${kidBy(momKid).name} · ${list.length} ${L("routine", "рутин")}`, chip: true, extra: `<button class="plainbtn primary" id="r-new">${I.plus}${L("Nuova routine", "Нова рутина")}</button>` });
+  $("r-new").addEventListener("click", () => toast(L("Creare una routine nuova – nel prossimo passo", "Нова рутина – на наступному кроці")));
+  body.innerHTML = list.length ? `<div class="grid2">${list.map(r => { const sc = schedOf(momKid, r.id); return `<button class="rt" data-rid="${r.id}"><span class="thumb lg" style="${coverBG(r)};background-color:${art(r.cover) ? r.tint : "#FFFFFF"}">${coverHTML(r)}</span><span class="nm">${esc(rn(r.id))}<small>${schedText(sc)}</small></span>${sc.bell ? I.bell : ""}${I.chevR}</button>`; }).join("")}</div>`
+    : `<div class="box"><h2>${kidBy(momKid).name} ${L("non ha ancora routine", "ще не має рутин")}</h2></div>`;
   body.querySelectorAll(".rt").forEach(b => b.addEventListener("click", () => { sub = { edit: b.dataset.rid, from: "routine" }; renderMom(); }));
 }
 function gcalLinks(rid) {
   const sc = schedOf(momKid, rid); const groups = {};
   sc.slots.forEach(s => { (groups[s.t] = groups[s.t] || []).push(s.d); });
   const BY = ["", "MO", "TU", "WE", "TH", "FR", "SA", "SU"];
-  return Object.entries(groups).map(([t, ds]) => {
-    ds.sort((a, b) => a - b); const base = today(); let first = addDays(base, ((ds[0] - dowOf(base)) + 7) % 7);
+  return Object.entries(groups).map(([t, dd]) => {
+    dd.sort((a, b) => a - b); const base = today(); const first = addDays(base, ((dd[0] - dowOf(base)) + 7) % 7);
     const [h, m] = t.split(":").map(Number); const st0 = new Date(first); st0.setHours(h, m, 0, 0); const en = new Date(st0.getTime() + 30 * 60000);
     const f = d => `${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}T${pad2(d.getHours())}${pad2(d.getMinutes())}00`;
-    const text = `${kidBy(momKid).name}: ${rName(rid, "it")}`;
-    const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(text)}&dates=${f(st0)}/${f(en)}&ctz=Europe/Rome&recur=${encodeURIComponent("RRULE:FREQ=WEEKLY;BYDAY=" + ds.map(d => BY[d]).join(","))}&details=${encodeURIComponent("Tra 10 minuti: " + rName(rid, "it") + ". Promemoria da Il mio mondo.")}`;
-    return { label: ds.map(d => DS[d]).join(", ") + " · " + t, url };
+    const text = `${kidBy(momKid).name}: ${rn(rid)}`;
+    const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(text)}&dates=${f(st0)}/${f(en)}&ctz=Europe/Rome&recur=${encodeURIComponent("RRULE:FREQ=WEEKLY;BYDAY=" + dd.map(d => BY[d]).join(","))}&details=${encodeURIComponent(L("Tra 10 minuti: ", "За 10 хвилин: ") + rn(rid) + ". Il mio mondo.")}`;
+    return { label: dd.map(d => ds(d)).join(", ") + " · " + t, url };
   });
 }
 function viewEditor(body, rid) {
   const r = RBY[rid], sc = schedOf(momKid, rid), k = kidBy(momKid);
   const back = () => { sub = null; renderMom(); };
-  head({ title: rName(rid, "it"), subtitle: `Routine di ${k.name}`, back, extra: `<button class="plainbtn onnav" id="e-prev">Anteprima</button>` });
+  head({ title: rn(rid), subtitle: `${L("Routine di", "Рутина:")} ${k.name}`, back, extra: `<button class="plainbtn onnav" id="e-prev">${L("Anteprima", "Перегляд")}</button>` });
   $("e-prev").addEventListener("click", () => { kidId = momKid; lang = k.lang; applyLang(); rId = rid; preview = true; buildDay(); show("routine"); });
   const ord = orderOf(momKid, rid);
-  const steps = ord.map((i, pos) => `<div class="step-ed"><span class="thumb" style="background-color:${r.steps[i].tint}">${art(r.steps[i].img) || ""}</span><input value="${esc(stepName(momKid, rid, i, "it"))}" data-i="${i}" aria-label="Nome del passo"><button class="mini" data-mv="${pos}" data-dir="-1" aria-label="Sposta su" ${pos === 0 ? "disabled" : ""}>${I.up}</button><button class="mini" data-mv="${pos}" data-dir="1" aria-label="Sposta giù" ${pos === ord.length - 1 ? "disabled" : ""}>${I.down}</button></div>`).join("");
+  const steps = ord.map((i, pos) => `<div class="step-ed"><span class="thumb" style="background-color:${r.steps[i].tint}">${art(r.steps[i].img) || ""}</span><input value="${esc(stepName(momKid, rid, i, st.ui))}" data-i="${i}" aria-label="${L("Nome del passo", "Назва кроку")}"><button class="mini" data-mv="${pos}" data-dir="-1" aria-label="${L("Sposta su", "Вище")}" ${pos === 0 ? "disabled" : ""}>${I.up}</button><button class="mini" data-mv="${pos}" data-dir="1" aria-label="${L("Sposta giù", "Нижче")}" ${pos === ord.length - 1 ? "disabled" : ""}>${I.down}</button></div>`).join("");
   const on = new Set(sc.slots.map(s => s.d)); const same = sc.slots.every(s => s.t === (sc.slots[0] || {}).t);
   const perDay = sub.perDay || !same;
-  const timeRows = !sc.slots.length ? `<div class="empty-note">Scegli almeno un giorno.</div>` : perDay
-    ? sc.slots.slice().sort((a, b) => a.d - b.d).map(s => `<label class="timefield"><span>${DS[s.d]}</span>${I.clock}<input type="time" value="${s.t}" data-d="${s.d}"></label>`).join("")
-    : `<label class="timefield">${I.clock}<input type="time" value="${sc.slots[0].t}" data-all="1"></label>${sc.slots.length > 1 ? `<button class="plainbtn sm onnav" id="e-perday">Ora diversa per giorno</button>` : ""}`;
+  const timeRows = !sc.slots.length ? `<div class="empty-note">${L("Scegli almeno un giorno.", "Вибери хоча б один день.")}</div>` : perDay
+    ? sc.slots.slice().sort((a, b) => a.d - b.d).map(s => `<label class="timefield"><span>${ds(s.d)}</span>${I.clock}<input type="time" value="${s.t}" data-d="${s.d}"></label>`).join("")
+    : `<label class="timefield">${I.clock}<input type="time" value="${sc.slots[0].t}" data-all="1"></label>${sc.slots.length > 1 ? `<button class="plainbtn sm onnav" id="e-perday">${L("Ora diversa per giorno", "Різний час по днях")}</button>` : ""}`;
   const links = sc.slots.length ? gcalLinks(rid) : [];
   body.innerHTML = `<div class="cols even">
-    <div class="box"><h2>Passi</h2><div class="steps-ed">${steps}</div><button class="plainbtn" id="e-add" style="align-self:flex-start">${I.plus}Aggiungi passo</button>
-      <div class="note">Il nome del passo è anche quello che il tablet dice ad alta voce. L'ordine qui è l'ordine che vede ${esc(k.name)}.</div></div>
-    <div class="box warm"><h2>Quando</h2>
-      <div class="lbl">Giorni</div><div class="days">${[1, 2, 3, 4, 5, 6, 7].map(d => `<button class="daybtn" data-day="${d}" aria-pressed="${on.has(d)}" aria-label="${DN[d]}">${DL[d]}</button>`).join("")}</div>
-      <div class="lbl">Ora</div><div class="timerow">${timeRows}</div>
-      <div class="switchrow"><div><b>Promemoria sul telefono</b><small>10 minuti prima</small></div><button class="switch" id="e-bell" role="switch" aria-checked="${sc.bell}" aria-label="Promemoria sul telefono"></button></div>
-      ${links.length ? `<div class="links">${links.length === 1 ? `<a class="plainbtn primary" href="${links[0].url}" target="_blank" rel="noopener">${I.calAdd}Aggiungi a Google Calendar</a>` : `<div class="lbl">Aggiungi a Google Calendar</div>${links.map(l => `<a class="plainbtn primary sm" href="${l.url}" target="_blank" rel="noopener">${I.calAdd}${l.label}</a>`).join("")}`}</div>` : ""}
-      <div class="note">${esc(k.name)} vede questa routine solo nei giorni scelti. Il promemoria arriva dal calendario del telefono: se cambi l'ora, aggiungila di nuovo.</div></div></div>`;
+    <div class="box"><h2>${L("Passi", "Кроки")}</h2><div class="steps-ed">${steps}</div><button class="plainbtn" id="e-add" style="align-self:flex-start">${I.plus}${L("Aggiungi passo", "Додати крок")}</button>
+      <div class="note">${L("Il nome del passo è anche quello che il tablet dice ad alta voce. L'ordine qui è l'ordine che vede", "Назву кроку планшет промовляє вголос. Порядок тут – той, який бачить")} ${esc(k.name)}.</div></div>
+    <div class="box warm"><h2>${L("Quando", "Коли")}</h2>
+      <div class="lbl">${L("Giorni", "Дні")}</div><div class="days">${[1, 2, 3, 4, 5, 6, 7].map(d => `<button class="daybtn" data-day="${d}" aria-pressed="${on.has(d)}" aria-label="${dn(d)}">${dl(d)}</button>`).join("")}</div>
+      <div class="lbl">${L("Ora", "Час")}</div><div class="timerow">${timeRows}</div>
+      <div class="switchrow"><div><b>${L("Promemoria sul telefono", "Нагадування на телефон")}</b><small>${L("10 minuti prima", "За 10 хвилин")}</small></div><button class="switch" id="e-bell" role="switch" aria-checked="${sc.bell}" aria-label="${L("Promemoria sul telefono", "Нагадування на телефон")}"></button></div>
+      ${links.length ? `<div class="links">${links.length === 1 ? `<a class="plainbtn primary" href="${links[0].url}" target="_blank" rel="noopener">${I.calAdd}${L("Aggiungi a Google Calendar", "Додати в Google Календар")}</a>` : `<div class="lbl">${L("Aggiungi a Google Calendar", "Додати в Google Календар")}</div>${links.map(l => `<a class="plainbtn primary sm" href="${l.url}" target="_blank" rel="noopener">${I.calAdd}${l.label}</a>`).join("")}`}</div>` : ""}
+      <div class="note">${esc(k.name)} ${L("vede questa routine solo nei giorni scelti. Il promemoria arriva dal calendario del telefono: se cambi l'ora, aggiungila di nuovo.", "бачить цю рутину лише у вибрані дні. Нагадування приходить з календаря телефона: якщо змінюєш час, додай подію ще раз.")}</div></div></div>`;
   body.querySelectorAll(".step-ed input").forEach(inp => inp.addEventListener("change", () => { const key = momKid + "|" + rid; const arr = (st.names[key] || []).slice(); arr[+inp.dataset.i] = inp.value.trim() || undefined; st.names[key] = arr; save(); }));
   body.querySelectorAll("[data-mv]").forEach(b => b.addEventListener("click", () => { const o = orderOf(momKid, rid).slice(), p = +b.dataset.mv, q = p + +b.dataset.dir; [o[p], o[q]] = [o[q], o[p]]; st.order[momKid + "|" + rid] = o; save(); renderMom(); }));
-  $("e-add").addEventListener("click", () => toast("Aggiungere passi con le foto – nel prossimo passo"));
+  $("e-add").addEventListener("click", () => toast(L("Aggiungere passi con le foto – nel prossimo passo", "Додавання кроків із фото – на наступному кроці")));
   body.querySelectorAll(".daybtn").forEach(b => b.addEventListener("click", () => {
     const d = +b.dataset.day; const i = sc.slots.findIndex(s => s.d === d);
     if (i >= 0) sc.slots.splice(i, 1); else sc.slots.push({ d, t: (sc.slots[0] || { t: "08:00" }).t });
@@ -1092,41 +1140,45 @@ function viewEditor(body, rid) {
   if ($("e-perday")) $("e-perday").addEventListener("click", () => { sub.perDay = true; renderMom(); });
   $("e-bell").addEventListener("click", () => { sc.bell = !sc.bell; save(); renderMom(); });
 }
+const langName = l => l === "uk" ? "Українська" : "Italiano";
 function viewKids(body) {
-  head({ title: "Bambini e impostazioni", subtitle: "Profili su questo tablet" });
-  setTimeout(() => $("k-add") && $("k-add").addEventListener("click", () => toast("Aggiungere un profilo – nel prossimo passo")));
+  head({ title: L("Bambini", "Діти"), subtitle: L("Profili su questo tablet", "Профілі на цьому планшеті") });
   body.innerHTML = `<div class="kids">${st.kids.map(k => `<div class="kid" style="background:${k.tint}"><span class="face" style="background-image:${avUrl(k)}"></span><span class="nm">${esc(k.name)}</span>
-    <div class="facts"><div>Lingua<b>${k.lang === "uk" ? "Українська" : "Italiano"}</b></div><div>Suono toccando l'immagine<b>${k.img ? "Sì" : "No"}</b></div><div>Routine<b>${kidRoutines(k.id).length || "–"}</b></div><div>Libri sonori<b>${BOOKS.length} visibili</b></div></div>
-    <button class="plainbtn" data-kid="${k.id}">Modifica</button></div>`).join("")}<button class="kid add" id="k-add"><span class="face">${I.plus}</span><span class="nm">Aggiungi un bambino</span><span class="note">Nome, avatar e routine proprie. I profili restano separati.</span></button></div><h2 class="sect">Impostazioni dell'app</h2><div style="display:grid;gap:16px" id="appset"></div>`;
+    <div class="facts"><div>${L("Lingua dei giochi", "Мова ігор")}<b>${langName(k.lang)}</b></div><div>${L("Suono toccando l'immagine", "Звук від дотику до картинки")}<b>${k.img ? L("Sì", "Так") : L("No", "Ні")}</b></div><div>${L("Routine", "Рутини")}<b>${kidRoutines(k.id).length || "–"}</b></div><div>${L("Libri sonori", "Звукові книжечки")}<b>${BOOKS.length} ${L("visibili", "видно")}</b></div></div>
+    <button class="plainbtn" data-kid="${k.id}">${L("Modifica", "Змінити")}</button></div>`).join("")}<button class="kid add" id="k-add"><span class="face">${I.plus}</span><span class="nm">${L("Aggiungi un bambino", "Додати дитину")}</span><span class="note">${L("Nome, avatar e routine proprie. I profili restano separati.", "Ім'я, аватар і свої рутини. Профілі не змішуються.")}</span></button></div>`;
   body.querySelectorAll("[data-kid]").forEach(b => b.addEventListener("click", () => { sub = { kid: b.dataset.kid }; renderMom(); }));
-  appSettings($("appset"));
+  $("k-add").addEventListener("click", () => toast(L("Aggiungere un profilo – nel prossimo passo", "Додавання профілю – на наступному кроці")));
 }
 let confirmTm = null;
 function viewKid(body, id) {
   const k = kidBy(id);
-  head({ title: k.name, subtitle: "Profilo e impostazioni", back: () => { sub = null; renderMom(); } });
+  head({ title: k.name, subtitle: L("Profilo", "Профіль"), back: () => { sub = null; renderMom(); } });
   body.innerHTML = `
-    <div class="panel"><div class="txt"><div class="t">Nome</div><div class="s">Come appare in «Chi gioca?»</div></div><input class="namefield" id="k-name" value="${esc(k.name)}" aria-label="Nome"></div>
-    <div class="panel"><div class="txt"><div class="t">Avatar</div><div class="s">Al posto della foto – dal set di prova</div></div><div class="avpick">${Object.keys(AV).map(a => `<button data-av="${a}" aria-pressed="${k.av === a}" style="background-image:url(${AV[a]})" aria-label="Avatar ${a}"></button>`).join("")}</div></div>
-    <div class="panel"><div class="txt"><div class="t">Lingua</div><div class="s">Testi dei giochi, nomi degli animali e voce</div></div><div class="seg"><button data-lang="it" aria-pressed="${k.lang === "it"}">Italiano</button><button data-lang="uk" aria-pressed="${k.lang === "uk"}">Українська</button></div></div>
-    <div class="panel"><div class="txt"><div class="t">Suono toccando l'immagine</div><div class="s">Il suono parte anche toccando l'illustrazione, non solo il pulsante verde</div></div><div class="seg"><button data-img="1" aria-pressed="${k.img}">Sì</button><button data-img="0" aria-pressed="${!k.img}">No</button></div></div>
-    <div class="panel"><div class="txt"><div class="t">La mia giornata di oggi</div><div class="s">Azzera i passi segnati di oggi in tutte le routine</div></div><button class="plainbtn" id="k-reset">Ricomincia</button></div>`;
+    <div class="panel"><div class="txt"><div class="t">${L("Nome", "Ім'я")}</div></div><input class="namefield" id="k-name" value="${esc(k.name)}" aria-label="${L("Nome", "Ім'я")}"></div>
+    <div class="panel"><div class="txt"><div class="t">${L("Avatar", "Аватар")}</div><div class="s">${L("Al posto della foto – dal set di prova", "Замість фото – з тестового набору")}</div></div><div class="avpick">${Object.keys(AV).map(a => `<button data-av="${a}" aria-pressed="${k.av === a}" style="background-image:url(${AV[a]})" aria-label="Avatar ${a}"></button>`).join("")}</div></div>
+    <div class="panel"><div class="txt"><div class="t">${L("Lingua dei giochi", "Мова ігор")}</div><div class="s">${L("Nomi degli animali, passi delle routine e voce per", "Назви тварин, кроки рутин і озвучка для")} ${esc(k.name)}</div></div><div class="seg"><button data-lang="it" aria-pressed="${k.lang === "it"}">Italiano</button><button data-lang="uk" aria-pressed="${k.lang === "uk"}">Українська</button></div></div>
+    <div class="panel"><div class="txt"><div class="t">${L("Suono toccando l'immagine", "Звук від дотику до картинки")}</div><div class="s">${L("Il suono parte anche toccando l'illustrazione, non solo il pulsante verde", "Звук вмикає не лише зелена кнопка, а й сама ілюстрація")}</div></div><div class="seg"><button data-img="1" aria-pressed="${k.img}">${L("Sì", "Так")}</button><button data-img="0" aria-pressed="${!k.img}">${L("No", "Ні")}</button></div></div>
+    <div class="panel"><div class="txt"><div class="t">${L("La giornata di oggi", "Сьогоднішній день")}</div><div class="s">${L("Azzera i passi segnati di oggi in tutte le routine", "Знімає сьогоднішні позначки в усіх рутинах")}</div></div><button class="plainbtn" id="k-reset">${L("Ricomincia", "Почати знову")}</button></div>`;
   $("k-name").addEventListener("change", e => { k.name = e.target.value.trim() || k.name; save(); renderMom(); });
   body.querySelectorAll("[data-av]").forEach(b => b.addEventListener("click", () => { k.av = b.dataset.av; save(); renderMom(); }));
   body.querySelectorAll("[data-lang]").forEach(b => b.addEventListener("click", () => { k.lang = b.dataset.lang; save(); renderMom(); }));
   body.querySelectorAll("[data-img]").forEach(b => b.addEventListener("click", () => { k.img = b.dataset.img === "1"; save(); renderMom(); }));
   const rb = $("k-reset");
   rb.addEventListener("click", () => {
-    if (!rb.classList.contains("confirm")) { rb.classList.add("confirm"); rb.textContent = "Tocca ancora per confermare"; clearTimeout(confirmTm); confirmTm = setTimeout(() => { rb.classList.remove("confirm"); rb.textContent = "Ricomincia"; }, 4000); return; }
+    if (!rb.classList.contains("confirm")) { rb.classList.add("confirm"); rb.textContent = L("Tocca ancora per confermare", "Натисни ще раз, щоб підтвердити"); clearTimeout(confirmTm); confirmTm = setTimeout(() => { rb.classList.remove("confirm"); rb.textContent = L("Ricomincia", "Почати знову"); }, 4000); return; }
     const dk = keyOf(today()); Object.keys(st.progress).forEach(key => { if (key.startsWith(id + "|" + dk)) delete st.progress[key]; }); save();
-    rb.classList.remove("confirm"); rb.textContent = "Fatto"; clearTimeout(confirmTm); confirmTm = setTimeout(() => { rb.textContent = "Ricomincia"; }, 1500);
+    rb.classList.remove("confirm"); rb.textContent = L("Fatto", "Готово"); clearTimeout(confirmTm); confirmTm = setTimeout(() => { rb.textContent = L("Ricomincia", "Почати знову"); }, 1500);
   });
 }
-function appSettings(body) {
+// Settings – the gear in the header of every parents' screen
+function viewSettings(body) {
+  head({ title: L("Impostazioni", "Налаштування"), subtitle: L("Valgono per tutto il tablet", "Діють для всього планшета"), back: () => { sub = null; renderMom(); } });
   body.innerHTML = `
-    <div class="panel"><div class="txt"><div class="t">Giorno per la prova</div><div class="s">Solo per il prototipo: mostra la giornata come se oggi fosse un altro giorno della settimana</div></div><div class="seg">${["Oggi", ...DL.slice(1)].map((l, i) => `<button data-sim="${i}" aria-pressed="${st.simDay === i}" ${i ? `aria-label="${DN[i]}"` : ""}>${l}</button>`).join("")}</div></div>
-    <div class="panel"><div class="txt"><div class="t">Schermo intero</div><div class="s">Nasconde la barra del browser durante il gioco</div></div><button class="plainbtn" id="a-full">Attiva</button></div>
-    <div class="panel"><div class="txt"><div class="t">Crediti dei suoni</div><div class="s">Mucca – calebmills99 (Freesound). Altri clip dal dataset ESC-50 (K. J. Piczak), da Freesound: maiale – felix.blume (CC0); gallo – pionium (CC Sampling+); aereo – daveincamas (CC BY); clacson – cinemafia (CC Sampling+); motore – Corsica_S (CC BY); onde del mare – HerbertBoland (CC BY). Dataset CC BY-NC 3.0, solo uso non commerciale. Musica: Mozart, Beethoven, Vivaldi, Romanza (anonimo) – opere di pubblico dominio, suonate con i campioni FluidR3_GM di Frank Wen (CC BY 3.0), via midi-js-soundfonts di B. Gleitzman. Carattere: Nunito di Vernon Adams (SIL Open Font License 1.1), via Fontsource. Avatar e illustrazioni generati per Il mio mondo.</div></div></div>`;
+    <div class="panel"><div class="txt"><div class="t">${L("Lingua", "Мова")}</div><div class="s">${L("Lingua dell'app. Cambia anche la lingua dei giochi di tutti i bambini; per un singolo bambino si può cambiare nel suo profilo.", "Мова застосунку. Змінює й мову ігор для всіх дітей; для окремої дитини її можна змінити в профілі.")}</div></div><div class="seg"><button data-ui="it" aria-pressed="${st.ui === "it"}">Italiano</button><button data-ui="uk" aria-pressed="${st.ui === "uk"}">Українська</button></div></div>
+    <div class="panel"><div class="txt"><div class="t">${L("Schermo intero", "Повний екран")}</div><div class="s">${L("Nasconde la barra del browser", "Ховає панель браузера")}</div></div><button class="plainbtn" id="a-full">${L("Attiva", "Увімкнути")}</button></div>
+    <div class="panel"><div class="txt"><div class="t">${L("Giorno per la prova", "Тестовий день")}</div><div class="s">${L("Solo per il prototipo: mostra la giornata come se oggi fosse un altro giorno della settimana", "Лише для прототипу: показує день так, ніби сьогодні інший день тижня")}</div></div><div class="seg">${[L("Oggi", "Сьогодні"), ...[1, 2, 3, 4, 5, 6, 7].map(dl)].map((l, i) => `<button data-sim="${i}" aria-pressed="${st.simDay === i}" ${i ? `aria-label="${dn(i)}"` : ""}>${l}</button>`).join("")}</div></div>
+    <div class="panel"><div class="txt"><div class="t">${L("Crediti dei suoni", "Звідки звуки")}</div><div class="s">Mucca – calebmills99 (Freesound). Altri clip dal dataset ESC-50 (K. J. Piczak), da Freesound: maiale – felix.blume (CC0); gallo – pionium (CC Sampling+); aereo – daveincamas (CC BY); clacson – cinemafia (CC Sampling+); motore – Corsica_S (CC BY); onde del mare – HerbertBoland (CC BY). Dataset CC BY-NC 3.0, solo uso non commerciale. Musica: Mozart, Beethoven, Vivaldi, Romanza (anonimo) – opere di pubblico dominio, suonate con i campioni FluidR3_GM di Frank Wen (CC BY 3.0), via midi-js-soundfonts di B. Gleitzman. Carattere: Nunito di Vernon Adams (SIL Open Font License 1.1), via Fontsource.</div></div></div>`;
+  body.querySelectorAll("[data-ui]").forEach(b => b.addEventListener("click", () => { st.ui = b.dataset.ui; st.kids.forEach(k => { k.lang = st.ui; }); save(); useKid(kidId); renderMom(); }));
   body.querySelectorAll("[data-sim]").forEach(b => b.addEventListener("click", () => { st.simDay = +b.dataset.sim; save(); renderMom(); }));
   $("a-full").addEventListener("click", () => { const el = document.documentElement; try { (el.requestFullscreen || el.webkitRequestFullscreen).call(el).catch(() => {}); } catch (e) {} });
 }
@@ -1180,6 +1232,6 @@ useKid(kidId); openMom(false);
 
 </script>
 
-<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").then(r => r.update()).catch(() => {}));</script>
 </body>
 </html>
