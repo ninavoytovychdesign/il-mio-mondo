@@ -29,6 +29,9 @@ const double navSize = 56;
 TextStyle ts(double size, {FontWeight w = FontWeight.w700, Color color = C.ink, double height = 1.2, double spacing = 0}) =>
     TextStyle(fontFamily: 'Nunito', fontSize: size, fontWeight: w, color: color, height: height, letterSpacing: spacing);
 
+/// Phone: the short side is under 600 – same screens, tighter density
+bool isPhone(BuildContext context) => MediaQuery.sizeOf(context).shortestSide < 600;
+
 bool isPortrait(BuildContext context) {
   final s = MediaQuery.of(context).size;
   return s.height > s.width;
@@ -198,8 +201,8 @@ class _CardPressState extends State<CardPress> {
             duration: const Duration(milliseconds: 90),
             scale: _down && widget.onTap != null ? 0.985 : 1,
             child: Container(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-              decoration: BoxDecoration(color: widget.color, borderRadius: BorderRadius.circular(rCard)),
+              padding: isPhone(context) ? const EdgeInsets.fromLTRB(10, 10, 10, 16) : const EdgeInsets.fromLTRB(16, 16, 16, 24),
+              decoration: BoxDecoration(color: widget.color, borderRadius: BorderRadius.circular(isPhone(context) ? 24 : rCard)),
               child: widget.child,
             ),
           ),
@@ -231,7 +234,7 @@ class Frame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pad = isPortrait(context) ? 32.0 : 40.0;
+    final pad = isPhone(context) ? 20.0 : (isPortrait(context) ? 32.0 : 40.0);
     return Scaffold(
       backgroundColor: C.bg,
       body: SafeArea(
@@ -242,7 +245,7 @@ class Frame extends StatelessWidget {
               padding: EdgeInsets.all(pad),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [head, SizedBox(height: gap), Expanded(child: body)],
+                children: [head, SizedBox(height: isPhone(context) ? 20 : gap), Expanded(child: body)],
               ),
             ),
           ),
@@ -265,7 +268,7 @@ class Head extends StatelessWidget {
         child: Row(
           children: [
             if (onBack != null) ...[NavBtn(svg: Ic.back, onTap: onBack), const SizedBox(width: 16)],
-            Expanded(child: Text(title, style: ts(32), maxLines: 1, overflow: TextOverflow.ellipsis)),
+            Expanded(child: Text(title, style: ts(isPhone(context) ? 24 : 32), maxLines: 2, overflow: TextOverflow.ellipsis)),
             if (trailing != null) ...[const SizedBox(width: 16), trailing!],
           ],
         ),

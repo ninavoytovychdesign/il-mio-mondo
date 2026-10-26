@@ -103,7 +103,7 @@ class HomeScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('IL MIO MONDO', style: ts(15, w: FontWeight.w600, color: C.ink2, spacing: 0.9)),
-                    Text(s.tr('homeTitle'), style: ts(40), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    Text(s.tr('homeTitle'), style: ts(isPhone(context) ? 28 : 40), maxLines: 2, overflow: TextOverflow.ellipsis),
                   ],
                 ),
               ),
@@ -153,8 +153,8 @@ class _SectionCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(title, style: ts(24)),
-                        Text(subtitle, style: ts(18, w: FontWeight.w600, color: C.ink2, height: 1.4)),
+                        Text(title, style: ts(isPhone(context) ? 20 : 24)),
+                        Text(subtitle, style: ts(isPhone(context) ? 15 : 18, w: FontWeight.w600, color: C.ink2, height: 1.4)),
                       ],
                     ),
                   ),
@@ -373,7 +373,7 @@ class _Tile extends StatelessWidget {
             const SizedBox(height: 16),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Text(title, style: ts(24), maxLines: 1, overflow: TextOverflow.ellipsis),
+              child: Text(title, style: ts(isPhone(context) ? 17 : 24), maxLines: 2, overflow: TextOverflow.ellipsis),
             ),
           ],
         ),
@@ -457,7 +457,7 @@ class _BookScreenState extends State<BookScreen> with _KeepAwake<BookScreen> {
             children: [
               NavBtn(svg: Ic.back, round: false, onTap: _page > 0 ? () => _turn(-1) : null),
               const SizedBox(width: 16),
-              Expanded(child: Text(name, style: ts(36), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis)),
+              Expanded(child: Text(name, style: ts(isPhone(context) ? 28 : 36), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis)),
               const SizedBox(width: 16),
               NavBtn(svg: Ic.next, round: false, onTap: _page < _pages.length - 1 ? () => _turn(1) : null),
             ],
@@ -490,8 +490,8 @@ class _BookScreenState extends State<BookScreen> with _KeepAwake<BookScreen> {
                 label: s.tr('listen'),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 100),
-                  width: 200,
-                  height: 200,
+                  width: isPhone(context) ? 148 : 200,
+                  height: isPhone(context) ? 148 : 200,
                   transform: Matrix4.translationValues(0, _pressed ? 2 : (_playing ? 1 : 0), 0),
                   decoration: BoxDecoration(
                     color: active ? C.audioPlay : C.audio,
@@ -499,7 +499,7 @@ class _BookScreenState extends State<BookScreen> with _KeepAwake<BookScreen> {
                     boxShadow: _pressed ? const [] : const [BoxShadow(color: Color(0x382E628C), blurRadius: 6, offset: Offset(0, 2))],
                   ),
                   foregroundDecoration: soft3dOverlay(circle: true, pressed: _pressed),
-                  child: Center(child: icon(Ic.listen, 104, Colors.white)),
+                  child: Center(child: icon(Ic.listen, isPhone(context) ? 78 : 104, Colors.white)),
                 ),
               ),
             ),
@@ -736,18 +736,22 @@ class _StepView extends StatelessWidget {
         }),
       ),
     );
-    final lamp = Lamp(on: done, current: current, size: row ? 120 : 108, label: labelDone, onTap: onLamp);
+    final phone = isPhone(context);
+    final lamp = Lamp(on: done, current: current, size: phone ? 76 : (row ? 120 : 108), label: labelDone, onTap: onLamp);
     if (row) {
       return Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AspectRatio(aspectRatio: 1, child: pic),
-          const SizedBox(width: 20),
-          Expanded(child: Align(alignment: Alignment.centerLeft, child: Text(name, style: ts(28)))),
+          if (phone)
+            LayoutBuilder(builder: (context, box) => SizedBox(width: math.min(box.maxHeight, 150), child: Center(child: AspectRatio(aspectRatio: 1, child: pic))))
+          else
+            AspectRatio(aspectRatio: 1, child: pic),
+          SizedBox(width: phone ? 14 : 20),
+          Expanded(child: Align(alignment: Alignment.centerLeft, child: Text(name, style: ts(phone ? 20 : 28)))),
           const SizedBox(width: 16),
           Center(child: lamp),
           // room for the lamp's glow, so it is not cut at the screen edge
-          const SizedBox(width: 28),
+          SizedBox(width: phone ? 20 : 28),
         ],
       );
     }

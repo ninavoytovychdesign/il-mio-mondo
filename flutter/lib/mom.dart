@@ -109,8 +109,8 @@ class Box extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(color: color ?? (warm ? C.cardWarm : C.cardGreen), borderRadius: BorderRadius.circular(rCard)),
+        padding: EdgeInsets.all(isPhone(context) ? 16 : 24),
+        decoration: BoxDecoration(color: color ?? (warm ? C.cardWarm : C.cardGreen), borderRadius: BorderRadius.circular(isPhone(context) ? 24 : rCard)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -369,7 +369,7 @@ class _MomShellState extends State<MomShell> {
           _ => _oggi(s),
         };
     }
-    final pad = isPortrait(context) ? 32.0 : 40.0;
+    final pad = isPhone(context) ? 20.0 : (isPortrait(context) ? 32.0 : 40.0);
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
@@ -403,7 +403,7 @@ class _MomShellState extends State<MomShell> {
                   ),
                 ),
               ),
-              Positioned(left: 0, right: 0, bottom: 16, child: Center(child: _dock(s))),
+              Positioned(left: 0, right: 0, bottom: isPhone(context) ? 10 : 16, child: Center(child: _dock(s))),
             ],
           ),
         ),
@@ -416,7 +416,7 @@ class _MomShellState extends State<MomShell> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(p.title, style: ts(32), maxLines: 1, overflow: TextOverflow.ellipsis),
+        Text(p.title, style: ts(isPhone(context) ? 26 : 32), maxLines: 1, overflow: TextOverflow.ellipsis),
         if (p.subtitle != null) Text(p.subtitle!, style: ts(16, w: FontWeight.w600, color: C.ink2), maxLines: 1, overflow: TextOverflow.ellipsis),
       ],
     );
@@ -438,6 +438,15 @@ class _MomShellState extends State<MomShell> {
     final right = Row(mainAxisSize: MainAxisSize.min, children: [
       for (var i = 0; i < actions.length; i++) ...[if (i > 0) const SizedBox(width: 12), actions[i]],
     ]);
+    if (isPhone(context) && (p.extra.isNotEmpty || s.cameFromChild)) {
+      // phone: titles and the gear on the first line, the action buttons on the next
+      final acts = [...p.extra, if (s.cameFromChild) actions[p.extra.length]];
+      return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Row(children: [Expanded(child: left), if (sub != _Sub.settings) ...[const SizedBox(width: 12), actions.last]]),
+        const SizedBox(height: 12),
+        Wrap(spacing: 12, runSpacing: 12, children: acts),
+      ]);
+    }
     if (isPortrait(context) && p.extra.isNotEmpty && s.cameFromChild) {
       return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [left, const SizedBox(height: 16), Align(alignment: Alignment.centerRight, child: right)]);
     }
@@ -455,9 +464,11 @@ class _MomShellState extends State<MomShell> {
       ['routine', s.l('Routine', 'Рутини'), MI.tRoutine, MI.fRoutine],
       ['bambini', s.l('Bambini', 'Діти'), MI.tKids, MI.fKids],
     ];
+    final phone = isPhone(context);
     return Container(
-      height: 80,
-      padding: const EdgeInsets.all(8),
+      height: phone ? 68 : 80,
+      margin: EdgeInsets.symmetric(horizontal: phone ? 12 : 0),
+      padding: EdgeInsets.all(phone ? 6 : 8),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(999),
@@ -465,16 +476,17 @@ class _MomShellState extends State<MomShell> {
         boxShadow: const [BoxShadow(color: Color(0x1A3E4C43), blurRadius: 20, offset: Offset(0, 6))],
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisSize: phone ? MainAxisSize.max : MainAxisSize.min,
         children: [
           for (final t in tabs) ...[
-            if (t != tabs.first) const SizedBox(width: 4),
-            _DockItem(
+            if (t != tabs.first) SizedBox(width: phone ? 2 : 4),
+            _expandIf(phone, _DockItem(
+              compact: phone,
               label: t[1],
               svg: (tab == t[0] && sub != _Sub.settings) ? t[3] : t[2],
               on: tab == t[0] && sub != _Sub.settings,
               onTap: () => goTab(t[0]),
-            ),
+            )),
           ],
         ],
       ),
@@ -591,10 +603,12 @@ class _MomShellState extends State<MomShell> {
     final week = Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        _Mini(svg: MI.chevL, label: s.l('Settimana precedente', 'Попередній тиждень'), onTap: () => setState(() => calDate = sel.subtract(const Duration(days: 7)))),
-        const SizedBox(width: 8),
+        if (!isPhone(context)) ...[
+          _Mini(svg: MI.chevL, label: s.l('Settimana precedente', 'Попередній тиждень'), onTap: () => setState(() => calDate = sel.subtract(const Duration(days: 7)))),
+          const SizedBox(width: 8),
+        ],
         for (var i = 0; i < 7; i++) ...[
-          if (i > 0) const SizedBox(width: 8),
+          if (i > 0) SizedBox(width: isPhone(context) ? 4 : 8),
           Expanded(
             child: _WeekDay(
               letter: dayShort[s.ui]![i + 1],
@@ -606,8 +620,10 @@ class _MomShellState extends State<MomShell> {
             ),
           ),
         ],
-        const SizedBox(width: 8),
-        _Mini(svg: MI.chevR, label: s.l('Settimana successiva', 'Наступний тиждень'), onTap: () => setState(() => calDate = sel.add(const Duration(days: 7)))),
+        if (!isPhone(context)) ...[
+          const SizedBox(width: 8),
+          _Mini(svg: MI.chevR, label: s.l('Settimana successiva', 'Наступний тиждень'), onTap: () => setState(() => calDate = sel.add(const Duration(days: 7)))),
+        ],
       ],
     );
     return _Page(
@@ -774,6 +790,8 @@ class _MomShellState extends State<MomShell> {
   }
 }
 
+Widget _expandIf(bool on, Widget w) => on ? Expanded(child: w) : w;
+
 class _Page {
   _Page({required this.title, required this.body, this.subtitle, this.back, this.extra = const []});
   final String title;
@@ -784,7 +802,8 @@ class _Page {
 }
 
 class _DockItem extends StatelessWidget {
-  const _DockItem({required this.label, required this.svg, required this.on, required this.onTap});
+  const _DockItem({required this.label, required this.svg, required this.on, required this.onTap, this.compact = false});
+  final bool compact;
   final String label;
   final String svg;
   final bool on;
@@ -799,14 +818,14 @@ class _DockItem extends StatelessWidget {
           behavior: HitTestBehavior.opaque,
           onTap: onTap,
           child: Container(
-            constraints: const BoxConstraints(minWidth: 84),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            constraints: BoxConstraints(minWidth: compact ? 0 : 84),
+            padding: EdgeInsets.symmetric(horizontal: compact ? 2 : 10, vertical: compact ? 4 : 6),
             decoration: on ? soft3d(C.nav, radius: BorderRadius.circular(999)) : null,
             foregroundDecoration: on ? soft3dOverlay(radius: BorderRadius.circular(999)) : null,
             child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-              icon(svg, 24, on ? C.ink : C.ink2),
+              icon(svg, compact ? 22 : 24, on ? C.ink : C.ink2),
               const SizedBox(height: 4),
-              Text(label, style: ts(13, w: on ? FontWeight.w800 : FontWeight.w600, color: on ? C.ink : C.ink2, height: 1.1)),
+              Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(compact ? 11 : 13, w: on ? FontWeight.w800 : FontWeight.w600, color: on ? C.ink : C.ink2, height: 1.1)),
             ]),
           ),
         ),
@@ -851,9 +870,9 @@ class _WeekDay extends StatelessWidget {
                   border: Border.all(color: today ? C.ink3 : C.nav, width: 2),
                 ),
           child: Column(children: [
-            Text(letter.toUpperCase(), style: ts(13, color: selected ? Colors.white : C.ink2, spacing: 0.5)),
+            Text(letter.toUpperCase(), style: ts(isPhone(context) ? 11 : 13, color: selected ? Colors.white : C.ink2, spacing: 0.5)),
             const SizedBox(height: 4),
-            Text('$day', style: ts(22, color: fg)),
+            Text('$day', style: ts(isPhone(context) ? 18 : 22, color: fg)),
             const SizedBox(height: 4),
             SizedBox(
               height: 8,
@@ -920,11 +939,11 @@ class _DayRow extends StatelessWidget {
     return CardRow(
       onTap: onTap,
       child: Row(children: [
-        SizedBox(width: 56, child: Text(time, style: ts(18, w: done ? FontWeight.w600 : FontWeight.w700, color: done ? C.ink3 : C.ink))),
-        const SizedBox(width: 16),
-        thumb(cover, bg: flatArt.containsKey(cover) ? coverTint : C.surface),
-        const SizedBox(width: 16),
-        Expanded(child: Text(name, style: ts(18), maxLines: 2, overflow: TextOverflow.ellipsis)),
+        SizedBox(width: isPhone(context) ? 46 : 56, child: Text(time, style: ts(isPhone(context) ? 16 : 18, w: done ? FontWeight.w600 : FontWeight.w700, color: done ? C.ink3 : C.ink))),
+        SizedBox(width: isPhone(context) ? 10 : 16),
+        thumb(cover, w: isPhone(context) ? 44 : 56, h: isPhone(context) ? 40 : 48, bg: flatArt.containsKey(cover) ? coverTint : C.surface),
+        SizedBox(width: isPhone(context) ? 10 : 16),
+        Expanded(child: Text(name, style: ts(isPhone(context) ? 16 : 18), maxLines: 2, overflow: TextOverflow.ellipsis)),
         if (right != null) ...[const SizedBox(width: 12), right],
       ]),
     );
@@ -1308,7 +1327,7 @@ class _RoutineGridState extends State<RoutineGrid> {
                           boxShadow: dragging ? const [BoxShadow(color: Color(0x2E3E4C43), blurRadius: 28, offset: Offset(0, 12))] : const [],
                         ),
                         child: Row(children: [
-                          thumb(r.cover, w: 88, h: 68, r: 16, bg: flatArt.containsKey(r.cover) ? r.tint : Colors.white),
+                          thumb(r.cover, w: isPhone(context) ? 64 : 88, h: isPhone(context) ? 52 : 68, r: 16, bg: flatArt.containsKey(r.cover) ? r.tint : Colors.white),
                           const SizedBox(width: 16),
                           Expanded(
                             child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -1502,8 +1521,8 @@ class _RoutineEditorState extends State<RoutineEditor> {
             child: GestureDetector(
               onTap: () => s.toggleDay(widget.kidId, widget.rid, d),
               child: Container(
-                width: 52,
-                height: 52,
+                width: isPhone(context) ? 40 : 52,
+                height: isPhone(context) ? 40 : 52,
                 decoration: on.contains(d)
                     ? soft3d(_action, circle: true)
                     : BoxDecoration(color: Colors.white, shape: BoxShape.circle, border: Border.all(color: C.nav, width: 2)),
