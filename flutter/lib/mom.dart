@@ -51,7 +51,7 @@ void toast(BuildContext context, String msg) {
   m.hideCurrentSnackBar();
   m.showSnackBar(SnackBar(
     behavior: SnackBarBehavior.floating,
-    width: 520,
+    width: math.min(520, MediaQuery.sizeOf(context).width - 32),
     backgroundColor: C.ink,
     elevation: 0,
     duration: const Duration(milliseconds: 2600),
@@ -929,9 +929,9 @@ class _DayRow extends StatelessWidget {
       ]);
     } else if (appt != null) {
       right = Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        padding: EdgeInsets.symmetric(horizontal: isPhone(context) ? 10 : 14, vertical: isPhone(context) ? 4 : 6),
         decoration: BoxDecoration(color: _peach, borderRadius: BorderRadius.circular(999)),
-        child: Text(appt!, style: ts(15, w: FontWeight.w800, color: _apptInk)),
+        child: Text(appt!, style: ts(isPhone(context) ? 13 : 15, w: FontWeight.w800, color: _apptInk)),
       );
     } else if (bell) {
       right = icon(MI.bell, 24, C.ink2);
@@ -1125,11 +1125,12 @@ class _NoteComposerState extends State<NoteComposer> {
         ),
       ),
       const SizedBox(height: 12),
-      Row(children: [
-        Expanded(child: PlainBtn(expand: true, onBlock: true, svg: MI.plus, label: s.l('Nuova nota', 'Нова нотатка'), onTap: () => _save(s))),
-        const SizedBox(width: 12),
-        Expanded(
-          child: PlainBtn(
+      Flex(direction: isPhone(context) ? Axis.vertical : Axis.horizontal, crossAxisAlignment: isPhone(context) ? CrossAxisAlignment.stretch : CrossAxisAlignment.center, children: [
+        _expandIf(!isPhone(context), PlainBtn(expand: true, onBlock: true, svg: MI.plus, label: s.l('Nuova nota', 'Нова нотатка'), onTap: () => _save(s))),
+        const SizedBox(width: 12, height: 12),
+        _expandIf(
+          !isPhone(context),
+          PlainBtn(
             expand: true,
             onBlock: true,
             svg: _recording ? MI.stop : MI.mic,
