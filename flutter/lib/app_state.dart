@@ -229,6 +229,10 @@ class AppState extends ChangeNotifier {
     }
     _oldOrder.clear();
     _oldNames.clear();
+    // therapy routines got the blue communication book as their picture
+    for (final d in rdef.values) {
+      if ((d.base == 'logo' || d.base == 'fisio') && (d.cover == 'blocks' || d.cover == 'teddy')) d.cover = 'commbook';
+    }
   }
 
   final Map<String, List<int>> _oldOrder = {};

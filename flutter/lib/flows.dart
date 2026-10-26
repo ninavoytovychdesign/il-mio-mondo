@@ -13,7 +13,7 @@ import 'ui.dart';
 
 const int nameMax = 24;
 const int stepMax = 40;
-const List<String> coverKeys = ['sun', 'school', 'lunch', 'park', 'house', 'moon', 'blocks', 'teddy'];
+const List<String> coverKeys = ['sun', 'school', 'lunch', 'park', 'house', 'moon', 'commbook', 'blocks', 'teddy'];
 const List<String> stepLib = ['makebed', 'teeth', 'hands', 'towel', 'dress', 'shoes', 'jacket', 'backpack', 'stroller', 'busstop', 'bus', 'house', 'chair', 'pasta', 'water', 'pajamas', 'waitroom', 'blocks', 'exercise'];
 const Map<String, Map<String, String>> stepLibNames = {
   'it': {'makebed': 'Rifaccio il letto', 'teeth': 'Lavo i denti', 'hands': 'Lavo le mani', 'towel': 'Mi asciugo le mani', 'dress': 'Mi vesto', 'shoes': 'Metto le scarpe', 'jacket': 'Metto la giacca', 'backpack': 'Prendo lo zaino', 'stroller': 'Mi siedo nel passeggino', 'busstop': 'Andiamo alla fermata', 'bus': "Saliamo sull'autobus", 'house': 'Arriviamo a casa', 'chair': 'Mi siedo a tavola', 'pasta': 'Mangio', 'water': "Bevo l'acqua", 'pajamas': 'Metto il pigiama', 'waitroom': 'Aspettiamo', 'blocks': 'Giochiamo', 'exercise': 'Faccio gli esercizi'},
