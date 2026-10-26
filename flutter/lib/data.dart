@@ -102,8 +102,8 @@ const _night = Color(0xFFE8EAF6);
 const List<Routine> routines = [
   Routine(id: 'mattina', tint: _yellow, cover: 'sun', steps: [RStep('makebed', _lilac), RStep('teeth', _blue), RStep('hands', _green), RStep('towel', _peach)]),
   Routine(id: 'scuola', tint: _blue, cover: 'school', steps: [RStep('dress', _lilac), RStep('shoes', _yellow), RStep('jacket', _blue), RStep('stroller', _green)]),
-  Routine(id: 'logo', tint: Color(0xFFE5F2F8), cover: 'blocks', therapy: true, steps: [RStep('stroller', _green), RStep('busstop', _yellow), RStep('bus', _blue), RStep('blocks', Color(0xFFE5F2F8))]),
-  Routine(id: 'fisio', tint: _peach, cover: 'teddy', therapy: true, steps: [RStep('shoes', _yellow), RStep('jacket', _blue), RStep('stroller', _green), RStep('exercise', _peach)]),
+  Routine(id: 'logo', tint: Color(0xFFE5F2F8), cover: 'blocks', therapy: true, steps: [RStep('stroller', _green), RStep('busstop', _yellow), RStep('bus', _blue), RStep('waitroom', Color(0xFFE5F2F8))]),
+  Routine(id: 'fisio', tint: _peach, cover: 'teddy', therapy: true, steps: [RStep('shoes', _yellow), RStep('jacket', _blue), RStep('stroller', _green), RStep('waitroom', _peach)]),
   Routine(id: 'pranzo', tint: _blue, cover: 'lunch', steps: [RStep('hands', _blue), RStep('chair', _yellow), RStep('pasta', _peach), RStep('water', _green)]),
   Routine(id: 'passeggio', tint: _green, cover: 'park', steps: [RStep('shoes', _yellow), RStep('jacket', _blue), RStep('backpack', _peach), RStep('stroller', _green)]),
   Routine(id: 'casa', tint: _peach, cover: 'house', steps: [RStep('stroller', _green), RStep('busstop', _yellow), RStep('bus', _blue), RStep('house', _peach)]),
