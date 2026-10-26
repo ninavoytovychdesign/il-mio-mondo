@@ -188,11 +188,12 @@ class HoldButton extends StatefulWidget {
 class _HoldButtonState extends State<HoldButton> with SingleTickerProviderStateMixin {
   late final AnimationController _c = AnimationController(vsync: this, duration: const Duration(seconds: 2))
     ..addStatusListener((st) {
-      // the ring is full: open on release, so the lifted finger
-      // does not land on a button of the parents' screen
-      if (st == AnimationStatus.completed) _ready = true;
+      if (st == AnimationStatus.completed) {
+        _pointer = null;
+        _c.value = 0;
+        widget.onOpen();
+      }
     });
-  bool _ready = false;
   int? _pointer;
   bool _hint = false;
   int _hintToken = 0;
@@ -206,7 +207,6 @@ class _HoldButtonState extends State<HoldButton> with SingleTickerProviderStateM
   void _down(PointerDownEvent e) {
     if (_pointer != null) return;
     _pointer = e.pointer;
-    _ready = false;
     setState(() => _hint = false);
     _c.forward(from: 0);
   }
@@ -214,12 +214,6 @@ class _HoldButtonState extends State<HoldButton> with SingleTickerProviderStateM
   void _up(PointerEvent e) {
     if (e.pointer != _pointer) return;
     _pointer = null;
-    if (_ready) {
-      _ready = false;
-      _c.value = 0;
-      if (e is PointerUpEvent) WidgetsBinding.instance.addPostFrameCallback((_) => widget.onOpen());
-      return;
-    }
     if (_c.isAnimating) {
       _c.stop();
       _c.value = 0;
