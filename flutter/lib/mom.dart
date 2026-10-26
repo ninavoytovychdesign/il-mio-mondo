@@ -1281,7 +1281,7 @@ class _NoteItemState extends State<NoteItem> {
 class RoutineGrid extends StatefulWidget {
   const RoutineGrid({super.key, required this.kidId, required this.items, required this.onOpen});
   final String kidId;
-  final List<Routine> items;
+  final List<RoutineDef> items;
   final ValueChanged<String> onOpen;
 
   @override
