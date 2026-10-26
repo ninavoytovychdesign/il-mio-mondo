@@ -395,6 +395,7 @@ class _BookScreenState extends State<BookScreen> with _KeepAwake<BookScreen> {
   int _page = 0;
   bool _pressed = false;
   bool _playing = false;
+  int _playId = 0;
   int? _pointer;
   int _lastHit = 0;
 
@@ -404,6 +405,7 @@ class _BookScreenState extends State<BookScreen> with _KeepAwake<BookScreen> {
     Sound.instance.stop();
     setState(() {
       _page = math.max(0, math.min(_pages.length - 1, _page + d));
+      _playId++;
       _playing = false;
     });
   }
@@ -429,8 +431,18 @@ class _BookScreenState extends State<BookScreen> with _KeepAwake<BookScreen> {
 
   void _play() {
     // play() first ends the previous sound (its callback resets the flag), then the flag is set again
+    // first the sound or music, then the name is said once (Nina, 26.10)
+    final s = AppScope.of(context);
+    final name = pageNames[s.lang]![widget.book][_page];
+    final id = ++_playId;
     Sound.instance.play(_pages[_page], onEnd: () {
-      if (mounted) setState(() => _playing = false);
+      if (!mounted) return;
+      Future<void>.delayed(const Duration(milliseconds: 300), () {
+        if (!mounted || !_playing || id != _playId) return;
+        Sound.instance.speak(name, s.voice(), onEnd: () {
+          if (mounted) setState(() => _playing = false);
+        });
+      });
     });
     setState(() => _playing = true);
   }
