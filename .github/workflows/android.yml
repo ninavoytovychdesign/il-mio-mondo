@@ -1,0 +1,82 @@
+name: Android APK
+
+on:
+  push:
+    branches: [main]
+    paths: ['flutter/**', '.github/workflows/android.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: flutter
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Android project files
+        run: |
+          flutter --version | tee ../ci-version.log
+          flutter create --platforms=android --org it.ilmiomondo --project-name il_mio_mondo . 2>&1 | tee ../ci-create.log
+          rm -rf test
+          python3 ci/patch_android.py > ../ci-manifest.log
+
+      - name: Same signing key for every build (updates install over the old app)
+        run: mkdir -p ~/.android && cp ci/debug.keystore ~/.android/debug.keystore
+
+      - name: Packages
+        run: flutter pub get 2>&1 | tee ../ci-pub.log
+
+      - name: App icon
+        run: dart run flutter_launcher_icons 2>&1 | tee ../ci-icons.log
+
+      - name: Analyze
+        continue-on-error: true
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings 2>&1 | tee ../ci-analyze.log
+
+      - name: Build APK
+        run: |
+          flutter build apk --release 2>&1 | tee ../ci-build.log
+          cp build/app/outputs/flutter-apk/app-release.apk ../il-mio-mondo.apk
+
+      - name: Publish APK
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-latest
+          name: Il mio mondo – Android
+          body: Ultima versione dell'app per il tablet. Scarica il file il-mio-mondo.apk e aprilo sul tablet.
+          files: il-mio-mondo.apk
+          make_latest: true
+
+      - name: Save logs to the ci-logs branch
+        if: always()
+        working-directory: .
+        run: |
+          mkdir -p /tmp/logs
+          cp ci-*.log /tmp/logs/ 2>/dev/null || true
+          cp flutter/pubspec.lock /tmp/logs/ 2>/dev/null || true
+          echo "${{ github.sha }} ${{ job.status }}" > /tmp/logs/status.txt
+          git config user.name "ci"
+          git config user.email "ci@users.noreply.github.com"
+          git checkout --orphan ci-logs-tmp
+          git rm -rfq . || true
+          rm -rf flutter ci-*.log il-mio-mondo.apk
+          cp /tmp/logs/* .
+          git add -A
+          git commit -qm "CI logs ${{ github.sha }}"
+          git push -f origin HEAD:ci-logs

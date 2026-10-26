@@ -1,0 +1,42 @@
+name: il_mio_mondo
+description: "Il mio mondo – libri sonori e routine per Ostap."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_svg: any
+  audioplayers: any
+  flutter_tts: any
+  shared_preferences: any
+  wakelock_plus: any
+
+dev_dependencies:
+  flutter_launcher_icons: any
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/img/
+    - assets/snd/
+  fonts:
+    - family: Nunito
+      fonts:
+        - asset: assets/fonts/Nunito-600.ttf
+          weight: 600
+        - asset: assets/fonts/Nunito-700.ttf
+          weight: 700
+        - asset: assets/fonts/Nunito-800.ttf
+          weight: 800
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "icon/icon.png"
+  adaptive_icon_background: "#F1F5F1"
+  adaptive_icon_foreground: "icon/foreground.png"
+  min_sdk_android: 21
