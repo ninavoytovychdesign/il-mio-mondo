@@ -30,7 +30,7 @@ class IlMioMondoApp extends StatelessWidget {
     return AppScope(
       state: state,
       child: MaterialApp(
-        title: 'Il mio mondo',
+        title: 'Pasetto',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           fontFamily: 'Nunito',

@@ -51,8 +51,14 @@ jobs:
 
       - name: Build APK
         run: |
-          flutter build apk --release 2>&1 | tee ../ci-build.log
+          flutter build apk --release --build-name 0.3.0 --build-number ${{ github.run_number }} 2>&1 | tee ../ci-build.log
           cp build/app/outputs/flutter-apk/app-release.apk ../il-mio-mondo.apk
+
+      - name: Build Play bundle (unsigned, signed later with the upload key)
+        run: |
+          python3 ci/unsign_release.py > ../ci-gradle.log
+          flutter build appbundle --release --build-name 0.3.0 --build-number ${{ github.run_number }} 2>&1 | tee ../ci-aab.log
+          cp build/app/outputs/bundle/release/app-release.aab ../pasetto-unsigned.aab
 
       - name: Web preview (only to check the screens)
         continue-on-error: true
@@ -62,7 +68,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: android-latest
-          name: Il mio mondo – Android
+          name: Pasetto – Android
           body: Ultima versione dell'app per il tablet. Scarica il file il-mio-mondo.apk e aprilo sul tablet.
           files: il-mio-mondo.apk
           make_latest: true
@@ -75,6 +81,7 @@ jobs:
           cp ci-*.log /tmp/logs/ 2>/dev/null || true
           cp flutter/pubspec.lock /tmp/logs/ 2>/dev/null || true
           if [ -d flutter/build/web ]; then cp -r flutter/build/web /tmp/logs/web; fi
+          cp pasetto-unsigned.aab /tmp/logs/ 2>/dev/null || true
           echo "${{ github.sha }} ${{ job.status }}" > /tmp/logs/status.txt
           git config user.name "ci"
           git config user.email "ci@users.noreply.github.com"

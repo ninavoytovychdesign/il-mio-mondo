@@ -377,7 +377,7 @@ class _OnboardingState extends State<Onboarding> {
   Widget build(BuildContext context) {
     final s = AppScope.of(context);
     if (step == 0 && d.name.isEmpty) d.lang = s.ui;
-    final titles = [s.l('Benvenuti in Il mio mondo', 'Вітаємо в Il mio mondo'), s.l('Il primo bambino', 'Перша дитина'), s.l('La zona genitori', 'Батьківська частина')];
+    final titles = [s.l('Benvenuti in Pasetto', 'Вітаємо в Pasetto'), s.l('Il primo bambino', 'Перша дитина'), s.l('La zona genitori', 'Батьківська частина')];
     final dots = Row(children: [
       for (var i = 0; i < 3; i++)
         Container(
@@ -444,7 +444,7 @@ class _OnboardingState extends State<Onboarding> {
             Align(
               alignment: Alignment.centerLeft,
               child: PlainBtn(
-                label: s.l('Apri Il mio mondo', 'Відкрити Il mio mondo'),
+                label: s.l('Apri Pasetto', 'Відкрити Pasetto'),
                 primary: true,
                 onTap: () {
                   s.clearWiped();

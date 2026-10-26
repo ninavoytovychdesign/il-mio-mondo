@@ -47,6 +47,8 @@ const Color _peach = Color(0xFFFCEBE3);
 const Color _apptInk = Color(0xFF8A3B12);
 const Color _dash = Color(0xFFCFD8D1);
 
+const String privacyUrl = 'https://ninavoytovychdesign.github.io/il-mio-mondo/privacy/';
+
 void toast(BuildContext context, String msg) {
   final m = ScaffoldMessenger.of(context);
   m.hideCurrentSnackBar();
@@ -815,7 +817,15 @@ class _MomShellState extends State<MomShell> {
           ),
         ),
         const SizedBox(height: 24),
-        Panel(title: s.l('Informazioni', 'Про застосунок'), text: 'Il mio mondo 0.3\n$soundCredits'),
+        Panel(
+          title: s.l('Informazioni', 'Про застосунок'),
+          text: 'Pasetto 0.3 · nina.voytovych.design@gmail.com\n$soundCredits',
+          control: PlainBtn(
+            onBlock: true,
+            label: s.l('Informativa privacy', 'Політика конфіденційності'),
+            onTap: () => launchUrl(Uri.parse(privacyUrl), mode: LaunchMode.externalApplication),
+          ),
+        ),
         const SizedBox(height: 24),
         DangerPanel(
           title: s.l('Elimina tutti i dati', 'Видалити всі дані'),
@@ -1476,7 +1486,7 @@ class _RoutineEditorState extends State<RoutineEditor> {
           final st0 = DateTime(first.year, first.month, first.day, int.parse(p[0]), int.parse(p[1]));
           final en = st0.add(const Duration(minutes: 30));
           final text = '${s.kidBy(widget.kidId).name}: $rname';
-          final details = '${s.l('Tra 10 minuti: ', 'За 10 хвилин: ')}$rname. Il mio mondo.';
+          final details = '${s.l('Tra 10 minuti: ', 'За 10 хвилин: ')}$rname. Pasetto.';
           final url = 'https://calendar.google.com/calendar/render?action=TEMPLATE'
               '&text=${Uri.encodeComponent(text)}'
               '&dates=${f(st0)}/${f(en)}'

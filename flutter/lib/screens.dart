@@ -102,7 +102,7 @@ class HomeScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('IL MIO MONDO', style: ts(15, w: FontWeight.w600, color: C.ink2, spacing: 0.9)),
+                    Text('PASETTO', style: ts(15, w: FontWeight.w600, color: C.ink2, spacing: 0.9)),
                     Text(s.tr('homeTitle'), style: ts(isPhone(context) ? 28 : 40), maxLines: 2, overflow: TextOverflow.ellipsis),
                   ],
                 ),
