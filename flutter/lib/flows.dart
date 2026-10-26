@@ -349,7 +349,7 @@ Future<void> openAddKid(BuildContext context, {ValueChanged<String>? onAdded}) {
                 : () {
                     final id = s.addKid(name: d.name, av: d.av, photo: d.photo, lang: d.lang, templates: d.templates.toList());
                     Navigator.pop(ctx);
-                    toast(context, s.l('${d.name.trim()} è stato aggiunto', '${d.name.trim()} – профіль створено'));
+                    toast(context, s.l('Profilo di ${d.name.trim()} creato', '${d.name.trim()} – профіль створено'));
                     onAdded?.call(id);
                   },
           ),

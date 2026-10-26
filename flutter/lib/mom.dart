@@ -52,7 +52,8 @@ void toast(BuildContext context, String msg) {
   m.hideCurrentSnackBar();
   m.showSnackBar(SnackBar(
     behavior: SnackBarBehavior.floating,
-    width: math.min(520, MediaQuery.sizeOf(context).width - 32),
+    // above the bottom menu, so it never covers the tabs
+    margin: EdgeInsets.fromLTRB(math.max(16, (MediaQuery.sizeOf(context).width - 520) / 2), 0, math.max(16, (MediaQuery.sizeOf(context).width - 520) / 2), 120),
     backgroundColor: C.ink,
     elevation: 0,
     duration: const Duration(milliseconds: 2600),
@@ -1816,7 +1817,9 @@ class _KidProfileState extends State<KidProfile> {
     final n = s.notesFor(k.id).length, r = s.kidRoutines(k.id).length, last = s.kids.length == 1;
     final ok = await confirmDialog(context,
         title: s.l('Eliminare il profilo di ${k.name}?', 'Видалити профіль ${k.name}?'),
-        text: s.l('Spariscono $r routine, i progressi e $n note del diario. Non si può annullare.', 'Зникнуть рутини ($r), прогрес і нотатки щоденника ($n). Скасувати не можна.') +
+        text: (n == 0
+                ? s.l('Spariscono le sue routine ($r) e i progressi. Non si può annullare.', 'Зникнуть рутини ($r) і прогрес. Скасувати не можна.')
+                : s.l('Spariscono le sue routine ($r), i progressi e le note del diario ($n). Non si può annullare.', 'Зникнуть рутини ($r), прогрес і нотатки щоденника ($n). Скасувати не можна.')) +
             (last ? ' ${s.l("È l'ultimo profilo: l'app tornerà alla schermata iniziale.", 'Це останній профіль: застосунок повернеться до початкового екрана.')}' : ''),
         ok: s.l('Elimina profilo', 'Видалити профіль'),
         danger: true);
