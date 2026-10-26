@@ -41,7 +41,7 @@ class MI {
   static const fKids = r'<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="8" r="4" fill="currentColor"/><circle cx="17" cy="9.5" r="3" fill="currentColor"/><path d="M2.5 20c.5-3.8 3.1-5.8 6.5-5.8s6 2 6.5 5.8z" fill="currentColor"/><path d="M16.5 14.2c2.9-.2 5 1.5 5.5 5.8h-4.6c-.2-2.4-.6-4.3-.9-5.8z" fill="currentColor"/></svg>';
 }
 
-const Color _action = Color(0xFF3E4C43); // selection: dark neutral
+const Color _action = C.success; // selection: primary grass green (Nina, 26.10)
 const Color _peach = Color(0xFFFCEBE3);
 const Color _apptInk = Color(0xFF8A3B12);
 const Color _dash = Color(0xFFCFD8D1);
