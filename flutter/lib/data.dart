@@ -8,6 +8,9 @@ const Map<String, Map<String, String>> uiText = {
   'it': {
     'homeTitle': 'Cosa facciamo oggi?',
     'holdHint': 'Per i genitori: tieni premuto 2 secondi',
+    'back': 'Indietro',
+    'prevPage': 'Pagina precedente',
+    'nextPage': 'Pagina successiva',
     'books': 'Libri sonori',
     'booksSub': 'Animali, musica e suoni',
     'day': 'La mia giornata',
@@ -22,6 +25,9 @@ const Map<String, Map<String, String>> uiText = {
   'uk': {
     'homeTitle': 'Чим займемося сьогодні?',
     'holdHint': 'Для батьків: утримуйте 2 секунди',
+    'back': 'Назад',
+    'prevPage': 'Попередня сторінка',
+    'nextPage': 'Наступна сторінка',
     'books': 'Звукові книжечки',
     'booksSub': 'Тварини, музика і звуки',
     'day': 'Мій день',

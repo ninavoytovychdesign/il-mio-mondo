@@ -468,11 +468,11 @@ class _BookScreenState extends State<BookScreen> with _KeepAwake<BookScreen> {
         children: [
           Row(
             children: [
-              NavBtn(svg: Ic.back, round: false, onTap: _page > 0 ? () => _turn(-1) : null),
+              NavBtn(svg: Ic.back, round: false, label: s.tr('prevPage'), onTap: _page > 0 ? () => _turn(-1) : null),
               const SizedBox(width: 16),
               Expanded(child: Text(name, style: ts(isPhone(context) ? 28 : 36), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis)),
               const SizedBox(width: 16),
-              NavBtn(svg: Ic.next, round: false, onTap: _page < _pages.length - 1 ? () => _turn(1) : null),
+              NavBtn(svg: Ic.next, round: false, label: s.tr('nextPage'), onTap: _page < _pages.length - 1 ? () => _turn(1) : null),
             ],
           ),
           const SizedBox(height: 32),

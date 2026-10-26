@@ -279,7 +279,7 @@ class Head extends StatelessWidget {
         height: navSize,
         child: Row(
           children: [
-            if (onBack != null) ...[NavBtn(svg: Ic.back, onTap: onBack), const SizedBox(width: 16)],
+            if (onBack != null) ...[NavBtn(svg: Ic.back, label: AppScope.of(context).tr('back'), onTap: onBack), const SizedBox(width: 16)],
             Expanded(child: Text(title, style: ts(isPhone(context) ? 24 : 32), maxLines: 2, overflow: TextOverflow.ellipsis)),
             if (trailing != null) ...[const SizedBox(width: 16), trailing!],
           ],
