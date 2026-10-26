@@ -117,8 +117,8 @@ const Map<String, Map<String, String>> routineNames = {
   'it': {
     'mattina': 'La mia mattina',
     'scuola': 'Vado a scuola',
-    'logo': 'Andiamo a terapia',
-    'fisio': 'Andiamo da Ilaria',
+    'logo': 'Terapia con Natalina',
+    'fisio': 'Terapia con Ilaria',
     'pranzo': 'Il pranzo',
     'passeggio': 'Andiamo a passeggio',
     'casa': 'Torno a casa',
@@ -127,8 +127,8 @@ const Map<String, Map<String, String>> routineNames = {
   'uk': {
     'mattina': 'Мій ранок',
     'scuola': 'Їду до садочка',
-    'logo': 'Йдемо на терапію',
-    'fisio': 'Йдемо до Іларії',
+    'logo': 'Терапія з Наталіною',
+    'fisio': 'Терапія з Іларією',
     'pranzo': 'Обід',
     'passeggio': 'Збираємося гуляти',
     'casa': 'Повертаюся додому',
