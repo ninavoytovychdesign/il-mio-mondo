@@ -208,8 +208,9 @@ class _CardPressState extends State<CardPress> {
 }
 
 class Avatar extends StatelessWidget {
-  const Avatar({super.key, this.size = navSize});
+  const Avatar({super.key, this.size = navSize, this.av});
   final double size;
+  final String? av;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -217,7 +218,7 @@ class Avatar extends StatelessWidget {
         height: size,
         decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
         clipBehavior: Clip.antiAlias,
-        child: Transform.scale(scale: 1.12, child: Image.asset('assets/img/av_ostap.webp', fit: BoxFit.cover)),
+        child: Transform.scale(scale: 1.12, child: Image.asset('assets/img/av_${av ?? 'ostap'}.webp', fit: BoxFit.cover)),
       );
 }
 

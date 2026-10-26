@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'app_state.dart';
-import 'screens.dart';
+import 'mom.dart';
 import 'ui.dart';
 
 Future<void> main() async {
@@ -19,6 +20,13 @@ class IlMioMondoApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: state,
+      builder: (context, _) => _app(),
+    );
+  }
+
+  Widget _app() {
     return AppScope(
       state: state,
       child: MaterialApp(
@@ -36,7 +44,16 @@ class IlMioMondoApp extends StatelessWidget {
           data: MediaQuery.of(context).copyWith(textScaler: TextScaler.noScaling),
           child: child!,
         ),
-        home: const HomeScreen(),
+        // Date and time pickers in the parents' language
+        locale: Locale(state.ui),
+        supportedLocales: const [Locale('it'), Locale('uk')],
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        // The app opens on the parents' home with the dock; play starts from there
+        home: const MomShell(),
       ),
     );
   }

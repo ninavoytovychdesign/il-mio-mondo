@@ -165,3 +165,57 @@ const Map<String, String> flatArt = {
   'teddy': r'<svg viewBox="0 0 200 170" xmlns="http://www.w3.org/2000/svg"><circle cx="66" cy="40" r="20" fill="#B98F6A"/><circle cx="134" cy="40" r="20" fill="#B98F6A"/><circle cx="66" cy="40" r="10" fill="#E8C9A6"/><circle cx="134" cy="40" r="10" fill="#E8C9A6"/><ellipse cx="100" cy="128" rx="54" ry="40" fill="#C9A07A"/><circle cx="100" cy="70" r="44" fill="#C9A07A"/><ellipse cx="100" cy="84" rx="18" ry="13" fill="#E8C9A6"/><circle cx="84" cy="64" r="5" fill="#3A3328"/><circle cx="116" cy="64" r="5" fill="#3A3328"/><circle cx="100" cy="79" r="5" fill="#3A3328"/><ellipse cx="100" cy="132" rx="26" ry="22" fill="#E8C9A6"/></svg>',
   'exercise': r'<svg viewBox="0 0 200 170" xmlns="http://www.w3.org/2000/svg"><ellipse cx="100" cy="154" rx="78" ry="10" fill="#DCE3DE"/><circle cx="100" cy="88" r="64" fill="#7FB8E0"/><path d="M42 70c30 14 86 14 116 0" stroke="#FFFFFF" stroke-width="8" fill="none" stroke-linecap="round"/><path d="M48 116c28-12 76-12 104 0" stroke="#5E9ACB" stroke-width="8" fill="none" stroke-linecap="round"/></svg>',
 };
+
+// ---------- Schedule ----------
+// Days: 1 = Monday … 7 = Sunday. Therapy times are the real schedule; the rest is an example that mom changes.
+const List<int> _all = [1, 2, 3, 4, 5, 6, 7];
+const List<int> _week = [1, 2, 3, 4, 5];
+Map<String, dynamic> _s(List<int> d, String t, bool bell) => {
+      'slots': [for (final x in d) {'d': x, 't': t}],
+      'bell': bell,
+    };
+Map<String, Map<String, dynamic>> defaultSchedule() => {
+      'mattina': _s(_all, '07:15', true),
+      'scuola': _s(_week, '08:00', true),
+      'logo': _s([5], '08:30', true),
+      'fisio': {
+        'slots': [
+          {'d': 1, 't': '08:30'},
+          {'d': 4, 't': '09:15'},
+        ],
+        'bell': true,
+      },
+      'pranzo': _s([6, 7], '12:30', false),
+      'passeggio': _s([2, 4, 6], '16:00', true),
+      'casa': _s(_week, '16:30', false),
+      'nanna': _s(_all, '20:30', true),
+    };
+// On a therapy day the therapy routine takes the place of "Vado a scuola"
+const Map<String, List<String>> skipIf = {'scuola': ['logo', 'fisio']};
+const Map<String, Map<String, String>> therapyShort = {
+  'it': {'logo': 'Natalina', 'fisio': 'Ilaria'},
+  'uk': {'logo': 'Наталіна', 'fisio': 'Іларія'},
+};
+
+const List<String> avatars = ['ostap', 'igor', 'rossa'];
+
+// ---------- Dates ----------
+const Map<String, List<String>> dayLong = {
+  'it': ['', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica'],
+  'uk': ['', 'Понеділок', 'Вівторок', 'Середа', 'Четвер', 'Пʼятниця', 'Субота', 'Неділя'],
+};
+const Map<String, List<String>> dayShort = {
+  'it': ['', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'],
+  'uk': ['', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'],
+};
+const Map<String, List<String>> dayLetter = {
+  'it': ['', 'L', 'M', 'M', 'G', 'V', 'S', 'D'],
+  'uk': ['', 'П', 'В', 'С', 'Ч', 'П', 'С', 'Н'],
+};
+const Map<String, List<String>> monthNames = {
+  'it': ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'],
+  'uk': ['січня', 'лютого', 'березня', 'квітня', 'травня', 'червня', 'липня', 'серпня', 'вересня', 'жовтня', 'листопада', 'грудня'],
+};
+
+const String soundCredits =
+    "Mucca – calebmills99 (Freesound). Altri clip dal dataset ESC-50 (K. J. Piczak), da Freesound: maiale – felix.blume (CC0); gallo – pionium (CC Sampling+); aereo – daveincamas (CC BY); clacson – cinemafia (CC Sampling+); motore – Corsica_S (CC BY); onde del mare – HerbertBoland (CC BY). Dataset CC BY-NC 3.0, solo uso non commerciale. Musica: Mozart, Beethoven, Vivaldi, Romanza (anonimo) – opere di pubblico dominio, suonate con i campioni FluidR3_GM di Frank Wen (CC BY 3.0), via midi-js-soundfonts di B. Gleitzman. Carattere: Nunito di Vernon Adams (SIL Open Font License 1.1).";

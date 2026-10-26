@@ -10,5 +10,12 @@ if 'TTS_SERVICE' not in s:
         s = s.replace('<queries>', '<queries>\n        ' + tts, 1)
     else:
         s = s.replace('</manifest>', '    <queries>\n        ' + tts + '\n    </queries>\n</manifest>', 1)
+# links to Google Calendar open in the browser / Calendar app (Android 11+ needs the query)
+view = '<intent><action android:name="android.intent.action.VIEW" /><data android:scheme="https" /></intent>'
+if 'android:scheme="https"' not in s:
+    s = s.replace('<queries>', '<queries>\n        ' + view, 1)
+# voice notes in the Diary
+if 'RECORD_AUDIO' not in s:
+    s = s.replace('<application', '<uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <application', 1)
 m.write_text(s)
 print(s)

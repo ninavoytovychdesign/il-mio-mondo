@@ -17,6 +17,30 @@ void _go(BuildContext context, Widget screen) {
   ));
 }
 
+/// The lock on the child's home: back to the parents' area (the first screen), with «Torna al gioco»
+void openParents(BuildContext context) {
+  Sound.instance.stop();
+  final s = AppScope.of(context);
+  s.cameFromChild = true;
+  s.save();
+  Navigator.of(context).popUntil((r) => r.isFirst);
+}
+
+/// Opens the child's home for a kid (from the parents' area)
+void startPlay(BuildContext context, String kidId) {
+  final s = AppScope.of(context);
+  s.kidId = kidId;
+  s.cameFromChild = false;
+  s.save();
+  _go(context, const HomeScreen());
+}
+
+/// Parents' preview of a routine – exactly what the child sees
+void previewRoutine(BuildContext context, String kidId, String rid) {
+  AppScope.of(context).kidId = kidId;
+  _go(context, StepsScreen(rid: rid, preview: true));
+}
+
 void _back(BuildContext context) {
   Sound.instance.stop();
   Navigator.of(context).maybePop();
@@ -71,7 +95,7 @@ class HomeScreen extends StatelessWidget {
           height: 72,
           child: Row(
             children: [
-              const Avatar(),
+              Avatar(av: s.kid.av),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
@@ -84,7 +108,7 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 16),
-              HoldButton(hint: s.tr('holdHint'), onOpen: () => _go(context, const ParentsScreen())),
+              HoldButton(hint: s.tr('holdHint'), onOpen: () => openParents(context)),
             ],
           ),
         ),
@@ -386,7 +410,8 @@ class _BookScreenState extends State<BookScreen> with _KeepAwake<BookScreen> {
 
   // Fires on touch (no need to release). The first finger or palm on the button or the picture counts,
   // further contacts are ignored while it stays down; taps closer than 300 ms are ignored.
-  void _hit(PointerDownEvent e) {
+  void _hit(PointerDownEvent e, {bool picture = false}) {
+    if (picture && !AppScope.of(context).kid.img) return;
     if (_pointer != null) return;
     final now = DateTime.now().millisecondsSinceEpoch;
     if (now - _lastHit < 300) return;
@@ -440,7 +465,7 @@ class _BookScreenState extends State<BookScreen> with _KeepAwake<BookScreen> {
           const SizedBox(height: 32),
           Expanded(
             child: Listener(
-              onPointerDown: _hit,
+              onPointerDown: (e) => _hit(e, picture: true),
               onPointerUp: _release,
               onPointerCancel: _release,
               child: Semantics(
@@ -499,7 +524,7 @@ class RoutinesScreen extends StatelessWidget {
     final n = items.length;
     final cols = portrait ? (n <= 2 ? 1 : 2) : (n <= 3 ? math.max(n, 1) : (n == 4 ? 2 : 3));
     return Frame(
-      head: Head(title: s.tr('day'), onBack: () => _back(context), trailing: const Avatar()),
+      head: Head(title: s.tr('day'), onBack: () => _back(context), trailing: Avatar(av: s.kid.av)),
       body: n == 0
           ? Center(child: Text(s.tr('noRoutines'), style: ts(28, color: C.ink2)))
           : LayoutBuilder(builder: (context, box) {
@@ -535,8 +560,9 @@ class RoutinesScreen extends StatelessWidget {
 // ROUTINE – steps with a lamp button
 // =====================================================================
 class StepsScreen extends StatefulWidget {
-  const StepsScreen({super.key, required this.rid});
+  const StepsScreen({super.key, required this.rid, this.preview = false});
   final String rid;
+  final bool preview;
 
   @override
   State<StepsScreen> createState() => _StepsScreenState();
@@ -546,12 +572,14 @@ class _StepsScreenState extends State<StepsScreen> with _KeepAwake<StepsScreen> 
   int? _speaking;
   int _lastTap = 0;
 
+  List<int> ord0(AppState s) => s.orderOf(s.kidId, widget.rid);
+
   // Tapping the picture only says the name; it never changes the status
   void _say(AppState s, int i) {
     final now = DateTime.now().millisecondsSinceEpoch;
     if (now - _lastTap < 300) return;
     _lastTap = now;
-    Sound.instance.speak(s.stepName(widget.rid, i), s.voice(), onEnd: () {
+    Sound.instance.speak(s.stepName(s.kidId, widget.rid, i), s.voice(), onEnd: () {
       if (mounted && _speaking == i) setState(() => _speaking = null);
     });
     setState(() => _speaking = i);
@@ -571,7 +599,8 @@ class _StepsScreenState extends State<StepsScreen> with _KeepAwake<StepsScreen> 
     final r = routineById(widget.rid);
     final done = s.progressOf(widget.rid);
     final all = done.every((x) => x);
-    final cur = done.indexWhere((x) => !x);
+    final curPos = ord0(s).indexWhere((i) => !done[i]);
+    final cur = curPos < 0 ? -1 : ord0(s)[curPos];
     final portrait = isPortrait(context);
 
     final finito = _Finito(
@@ -584,23 +613,24 @@ class _StepsScreenState extends State<StepsScreen> with _KeepAwake<StepsScreen> 
     Widget step(int i, {required bool row}) => _StepView(
           row: row,
           step: r.steps[i],
-          name: s.stepName(widget.rid, i),
+          name: s.stepName(s.kidId, widget.rid, i),
           done: done[i],
           current: i == cur,
           speaking: _speaking == i,
-          labelDone: '${done[i] ? s.tr('isDone') : s.tr('markDone')}: ${s.stepName(widget.rid, i)}',
+          labelDone: '${done[i] ? s.tr('isDone') : s.tr('markDone')}: ${s.stepName(s.kidId, widget.rid, i)}',
           onPicture: () => _say(s, i),
           onLamp: () => _toggle(s, i),
         );
 
-    final n = r.steps.length;
+    final ord = s.orderOf(s.kidId, widget.rid);
+    final n = ord.length;
     final Widget flow;
     if (portrait) {
       flow = Column(
         children: [
           for (var i = 0; i < n; i++) ...[
             if (i > 0) SizedBox(height: 24, child: Center(child: Transform.rotate(angle: math.pi / 2, child: icon(Ic.sep, 28, C.navInk)))),
-            Expanded(child: step(i, row: true)),
+            Expanded(child: step(ord[i], row: true)),
           ],
         ],
       );
@@ -620,14 +650,14 @@ class _StepsScreenState extends State<StepsScreen> with _KeepAwake<StepsScreen> 
                 SizedBox(width: sepW, child: icon(Ic.sep, 32, C.navInk)),
                 const SizedBox(width: gap),
               ],
-              Expanded(child: Center(child: SizedBox(width: math.min(colW, math.max(picW, 160)), child: step(i, row: false)))),
+              Expanded(child: Center(child: SizedBox(width: math.min(colW, math.max(picW, 160)), child: step(ord[i], row: false)))),
             ],
           ],
         );
       });
     }
 
-    return Frame(
+    final page = Frame(
       head: Head(
         title: s.routineName(widget.rid),
         onBack: () => _back(context),
@@ -644,6 +674,23 @@ class _StepsScreenState extends State<StepsScreen> with _KeepAwake<StepsScreen> 
               ],
             ),
     );
+    if (!widget.preview) return page;
+    return Stack(children: [
+      page,
+      Positioned(
+        left: 0,
+        right: 0,
+        bottom: 16,
+        child: Center(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+            decoration: BoxDecoration(color: C.ink, borderRadius: BorderRadius.circular(999)),
+            child: Text(s.l('Anteprima – così la vede il bambino', 'Перегляд – так бачить дитина'),
+                style: ts(16, color: Colors.white).copyWith(decoration: TextDecoration.none)),
+          ),
+        ),
+      ),
+    ]);
   }
 }
 
@@ -799,55 +846,3 @@ class _Finito extends StatelessWidget {
   }
 }
 
-// =====================================================================
-// PARENTS – for now only the child's language; the full parents' area comes next
-// =====================================================================
-class ParentsScreen extends StatelessWidget {
-  const ParentsScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final s = AppScope.of(context);
-    String l(String it, String uk) => s.lang == 'uk' ? uk : it;
-    Widget seg(String code, String label) {
-      final on = s.lang == code;
-      return Press(
-        onTap: () => s.setLang(code),
-        color: on ? C.navInk : Colors.white,
-        radius: 999,
-        height: 56,
-        padding: const EdgeInsets.symmetric(horizontal: 28),
-        child: Center(widthFactor: 1, child: Text(label, style: ts(20, color: on ? Colors.white : C.ink))),
-      );
-    }
-
-    return Frame(
-      head: Head(title: l('Genitori', 'Батьки'), onBack: () => _back(context)),
-      body: SingleChildScrollView(
-        child: Container(
-          padding: const EdgeInsets.all(32),
-          decoration: BoxDecoration(color: C.cardGreen, borderRadius: BorderRadius.circular(rCard)),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(l('Lingua di Ostap', 'Мова Остапа'), style: ts(24)),
-              const SizedBox(height: 8),
-              Text(
-                l('Nomi delle routine, dei passi e la voce che li legge.', 'Назви рутин і кроків та голос, який їх читає.'),
-                style: ts(18, w: FontWeight.w600, color: C.ink2, height: 1.4),
-              ),
-              const SizedBox(height: 20),
-              Wrap(spacing: 12, runSpacing: 12, children: [seg('it', 'Italiano'), seg('uk', 'Українська')]),
-              const SizedBox(height: 32),
-              Text(
-                l('Calendario, diario e modifica delle routine arriveranno nella prossima versione dell\'app.',
-                    'Календар, щоденник і редагування рутин зʼявляться в наступній версії застосунку.'),
-                style: ts(18, w: FontWeight.w600, color: C.ink2, height: 1.4),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}

@@ -9,6 +9,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  path_provider: any
+  record: any
+  url_launcher: any
   flutter_svg: any
   audioplayers: any
   flutter_tts: any
