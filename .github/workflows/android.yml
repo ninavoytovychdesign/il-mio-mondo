@@ -32,7 +32,7 @@ jobs:
       - name: Android project files
         run: |
           flutter --version | tee ../ci-version.log
-          flutter create --platforms=android --org it.ilmiomondo --project-name il_mio_mondo . 2>&1 | tee ../ci-create.log
+          flutter create --platforms=android,web --org it.ilmiomondo --project-name il_mio_mondo . 2>&1 | tee ../ci-create.log
           rm -rf test
           python3 ci/patch_android.py > ../ci-manifest.log
 
@@ -54,6 +54,10 @@ jobs:
           flutter build apk --release 2>&1 | tee ../ci-build.log
           cp build/app/outputs/flutter-apk/app-release.apk ../il-mio-mondo.apk
 
+      - name: Web preview (only to check the screens)
+        continue-on-error: true
+        run: flutter build web --release --no-web-resources-cdn 2>&1 | tee ../ci-web.log
+
       - name: Publish APK
         uses: softprops/action-gh-release@v2
         with:
@@ -70,13 +74,14 @@ jobs:
           mkdir -p /tmp/logs
           cp ci-*.log /tmp/logs/ 2>/dev/null || true
           cp flutter/pubspec.lock /tmp/logs/ 2>/dev/null || true
+          if [ -d flutter/build/web ]; then cp -r flutter/build/web /tmp/logs/web; fi
           echo "${{ github.sha }} ${{ job.status }}" > /tmp/logs/status.txt
           git config user.name "ci"
           git config user.email "ci@users.noreply.github.com"
           git checkout --orphan ci-logs-tmp
           git rm -rfq . || true
           rm -rf flutter ci-*.log il-mio-mondo.apk
-          cp /tmp/logs/* .
+          cp -r /tmp/logs/* .
           git add -A
           git commit -qm "CI logs ${{ github.sha }}"
           git push -f origin HEAD:ci-logs
