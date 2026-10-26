@@ -95,7 +95,7 @@ class HomeScreen extends StatelessWidget {
           height: 72,
           child: Row(
             children: [
-              Avatar(av: s.kid.av),
+              Avatar(av: s.kid.av, photo: s.kid.photo),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
@@ -313,14 +313,15 @@ class ShelfScreen extends StatelessWidget {
       body: LayoutBuilder(builder: (context, box) {
         const gap = 24.0;
         final cols = portrait ? 2 : 3;
-        final rows = (books.length / cols).ceil();
+        final vis = s.kid.books ?? List<int>.generate(books.length, (i) => i);
+        final rows = math.max(1, (vis.length / cols).ceil());
         final w = ((box.maxWidth - gap * (cols - 1)) / cols).floorToDouble();
         final h = ((box.maxHeight - gap * (rows - 1)) / rows).floorToDouble();
         return Wrap(
           spacing: gap,
           runSpacing: gap,
           children: [
-            for (var i = 0; i < books.length; i++)
+            for (final i in vis)
               SizedBox(
                 width: w,
                 height: h,
@@ -536,7 +537,7 @@ class RoutinesScreen extends StatelessWidget {
     final n = items.length;
     final cols = portrait ? (n <= 2 ? 1 : 2) : (n <= 3 ? math.max(n, 1) : (n == 4 ? 2 : 3));
     return Frame(
-      head: Head(title: s.tr('day'), onBack: () => _back(context), trailing: Avatar(av: s.kid.av)),
+      head: Head(title: s.tr('day'), onBack: () => _back(context), trailing: Avatar(av: s.kid.av, photo: s.kid.photo)),
       body: n == 0
           ? Center(child: Text(s.tr('noRoutines'), style: ts(28, color: C.ink2)))
           : LayoutBuilder(builder: (context, box) {
@@ -555,7 +556,7 @@ class RoutinesScreen extends StatelessWidget {
                 itemBuilder: (context, i) {
                   final r = items[i];
                   return _Tile(
-                    color: r.tint,
+                    color: Color(r.tint),
                     image: r.cover,
                     title: s.routineName(r.id),
                     done: s.isDone(r.id),
@@ -584,7 +585,7 @@ class _StepsScreenState extends State<StepsScreen> with _KeepAwake<StepsScreen> 
   int? _speaking;
   int _lastTap = 0;
 
-  List<int> ord0(AppState s) => s.orderOf(s.kidId, widget.rid);
+  List<int> ord0(AppState s) => List<int>.generate(s.def(s.kidId, widget.rid)?.steps.length ?? 0, (i) => i);
 
   // Tapping the picture only says the name; it never changes the status
   void _say(AppState s, int i) {
@@ -608,7 +609,8 @@ class _StepsScreenState extends State<StepsScreen> with _KeepAwake<StepsScreen> 
   @override
   Widget build(BuildContext context) {
     final s = AppScope.of(context);
-    final r = routineById(widget.rid);
+    final r = s.def(s.kidId, widget.rid);
+    if (r == null) return const Scaffold(backgroundColor: C.bg);
     final done = s.progressOf(widget.rid);
     final all = done.every((x) => x);
     final curPos = ord0(s).indexWhere((i) => !done[i]);
@@ -634,7 +636,7 @@ class _StepsScreenState extends State<StepsScreen> with _KeepAwake<StepsScreen> 
           onLamp: () => _toggle(s, i),
         );
 
-    final ord = s.orderOf(s.kidId, widget.rid);
+    final ord = List<int>.generate(s.def(s.kidId, widget.rid)?.steps.length ?? 0, (i) => i);
     final n = ord.length;
     final Widget flow;
     if (portrait) {
@@ -719,7 +721,7 @@ class _StepView extends StatelessWidget {
     required this.onLamp,
   });
   final bool row;
-  final RStep step;
+  final StepDef step;
   final String name;
   final bool done;
   final bool current;
@@ -738,12 +740,13 @@ class _StepView extends StatelessWidget {
         child: LayoutBuilder(builder: (context, box) {
           final side = box.maxWidth.isFinite ? box.maxWidth : box.maxHeight;
           return Container(
-            decoration: BoxDecoration(color: step.tint, borderRadius: BorderRadius.circular(rImg)),
+            decoration: BoxDecoration(color: Color(step.tint), borderRadius: BorderRadius.circular(rImg)),
             foregroundDecoration: speaking
                 ? BoxDecoration(borderRadius: BorderRadius.circular(rImg), border: Border.all(color: C.audio, width: 6))
                 : null,
-            padding: EdgeInsets.all(side * (row ? 0.03 : 0.08)),
-            child: picture(step.img),
+            clipBehavior: Clip.antiAlias,
+            padding: step.photo != null ? EdgeInsets.zero : EdgeInsets.all(side * (row ? 0.03 : 0.08)),
+            child: stepPicture(step, fit: step.photo != null ? BoxFit.cover : BoxFit.contain),
           );
         }),
       ),

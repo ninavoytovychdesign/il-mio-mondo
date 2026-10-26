@@ -19,7 +19,7 @@ int toMin(String t) {
 String fromMin(int m) => '${pad2((m ~/ 60) % 24)}:${pad2(m % 60)}';
 
 class Kid {
-  Kid({required this.id, required this.name, required this.av, required this.tint, required this.lang, required this.img});
+  Kid({required this.id, required this.name, required this.av, required this.tint, required this.lang, required this.img, this.photo, this.books});
   final String id;
   String name;
   String av;
@@ -27,7 +27,13 @@ class Kid {
   String lang;
   bool img;
 
-  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'av': av, 'tint': tint, 'lang': lang, 'img': img};
+  /// path of the parent's own photo for the avatar (instead of [av])
+  String? photo;
+
+  /// books the child sees; null = all
+  List<int>? books;
+
+  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'av': av, 'tint': tint, 'lang': lang, 'img': img, 'photo': photo, 'books': books};
   static Kid fromJson(Map<String, dynamic> j) => Kid(
         id: j['id'] as String,
         name: j['name'] as String,
@@ -35,6 +41,8 @@ class Kid {
         tint: j['tint'] as int,
         lang: j['lang'] as String,
         img: j['img'] as bool,
+        photo: j['photo'] as String?,
+        books: (j['books'] as List?)?.map((e) => e as int).toList(),
       );
 }
 
@@ -59,6 +67,60 @@ class Sched {
       );
 }
 
+/// One step of a child's routine: a picture from the set (or the parent's photo) and a name.
+/// [src] points at the template step it came from, so its name follows the language until it is renamed.
+class StepDef {
+  StepDef({this.src, required this.img, required this.tint, this.name, this.photo});
+  int? src;
+  String img;
+  int tint;
+  String? name;
+  String? photo;
+
+  Map<String, dynamic> toJson() => {'src': src, 'img': img, 'tint': tint, 'name': name, 'photo': photo};
+  static StepDef fromJson(Map<String, dynamic> j) => StepDef(src: j['src'] as int?, img: j['img'] as String, tint: j['tint'] as int, name: j['name'] as String?, photo: j['photo'] as String?);
+}
+
+/// A child's own copy of a routine – everything mom can change in the editor.
+class RoutineDef {
+  RoutineDef({required this.id, this.base, this.name, required this.cover, required this.tint, this.therapy = false, this.who, this.skipIf, this.hidden = false, required this.steps});
+  final String id;
+  final String? base; // template id, or null for a routine made from scratch
+  String? name;
+  String cover;
+  int tint;
+  bool therapy;
+  String? who;
+  List<String>? skipIf;
+  bool hidden;
+  List<StepDef> steps;
+
+  Map<String, dynamic> toJson() => {'id': id, 'base': base, 'name': name, 'cover': cover, 'tint': tint, 'therapy': therapy, 'who': who, 'skipIf': skipIf, 'hidden': hidden, 'steps': [for (final s in steps) s.toJson()]};
+  static RoutineDef fromJson(Map<String, dynamic> j) => RoutineDef(
+        id: j['id'] as String,
+        base: j['base'] as String?,
+        name: j['name'] as String?,
+        cover: j['cover'] as String,
+        tint: j['tint'] as int,
+        therapy: (j['therapy'] as bool?) ?? false,
+        who: j['who'] as String?,
+        skipIf: (j['skipIf'] as List?)?.map((e) => e as String).toList(),
+        hidden: (j['hidden'] as bool?) ?? false,
+        steps: [for (final s in (j['steps'] as List)) StepDef.fromJson(s as Map<String, dynamic>)],
+      );
+
+  static RoutineDef fromTemplate(Routine t, {String? id, bool hidden = false}) => RoutineDef(
+        id: id ?? t.id,
+        base: t.id,
+        cover: t.cover,
+        tint: t.tint.toARGB32(),
+        therapy: t.therapy,
+        skipIf: skipIfDefault[t.id],
+        hidden: hidden,
+        steps: [for (var i = 0; i < t.steps.length; i++) StepDef(src: i, img: t.steps[i].img, tint: t.steps[i].tint.toARGB32())],
+      );
+}
+
 class Note {
   Note({required this.id, required this.kid, required this.date, required this.ts, required this.text, this.audio});
   final String id;
@@ -66,7 +128,7 @@ class Note {
   final String date;
   final int ts;
   final String text;
-  final String? audio; // path of the voice recording on the tablet
+  final String? audio; // path of the voice recording on the device
 
   Map<String, dynamic> toJson() => {'id': id, 'kid': kid, 'date': date, 'ts': ts, 'text': text, 'audio': audio};
   static Note fromJson(Map<String, dynamic> j) => Note(
@@ -81,28 +143,31 @@ class Note {
 
 class RoutineAt {
   const RoutineAt(this.r, this.t);
-  final Routine r;
+  final RoutineDef r;
   final String t;
 }
 
-/// Everything the app remembers: profiles, schedule, today's progress, step names and order, notes.
+const List<int> kidTints = [0xFFE2F1EF, 0xFFFBECE4, 0xFFF1EBF8, 0xFFE5F1F7, 0xFFFBF3DC, 0xFFE9F3E5];
+
+/// Everything the app remembers: profiles, each child's routines and schedule, today's progress, notes.
 class AppState extends ChangeNotifier {
   AppState._(this._prefs);
   final SharedPreferences _prefs;
   static const _key = 'imm-state-1';
+  static const _wiped = 'imm-wiped';
 
-  List<Kid> kids = [Kid(id: 'ostap', name: 'Ostap', av: 'ostap', tint: 0xFFE2F1EF, lang: 'it', img: true)];
+  List<Kid> kids = [];
   Map<String, Map<String, Sched>> sched = {};
+  Map<String, RoutineDef> rdef = {}; // "kid|rid"
   Map<String, List<bool>> progress = {};
-  Map<String, List<String?>> names = {};
-  Map<String, List<int>> order = {};
   Map<String, List<String>> rorder = {};
   List<Note> notes = [];
   int simDay = 0;
   String ui = 'it';
+  bool micOk = false;
 
   /// The child who is playing now
-  String kidId = 'ostap';
+  String kidId = '';
 
   /// Parents' area was opened from the child's screens – shows «Torna al gioco»
   bool cameFromChild = false;
@@ -110,17 +175,64 @@ class AppState extends ChangeNotifier {
   static Future<AppState> load() async {
     final prefs = await SharedPreferences.getInstance();
     final s = AppState._(prefs);
-    s.sched = {
-      'ostap': {for (final e in defaultSchedule().entries) e.key: Sched.fromJson(e.value)},
-    };
     final raw = prefs.getString(_key);
+    var loaded = false;
     if (raw != null) {
       try {
         s._fromJson(jsonDecode(raw) as Map<String, dynamic>);
+        loaded = true;
       } catch (_) {}
     }
+    if (!loaded && prefs.getBool(_wiped) != true) s._seedDemo();
+    s._migrate();
+    s.kidId = s.kids.isNotEmpty ? s.kids.first.id : '';
     return s;
   }
+
+  /// Ostap's profile with the family's routines – the starting data of this build
+  void _seedDemo() {
+    kids = [Kid(id: 'ostap', name: 'Ostap', av: 'ostap', tint: 0xFFE2F1EF, lang: 'it', img: true)];
+    sched = {
+      'ostap': {for (final e in defaultSchedule().entries) e.key: Sched.fromJson(e.value)},
+    };
+  }
+
+  /// Older saves kept step order and names apart from the routines – fold them into each child's copy
+  void _migrate() {
+    for (final k in kids) {
+      for (final rid in (sched[k.id] ?? {}).keys) {
+        final key = '${k.id}|$rid';
+        if (rdef.containsKey(key)) continue;
+        final t = routines.where((r) => r.id == rid).firstOrNull;
+        if (t == null) continue;
+        final d = RoutineDef.fromTemplate(t, hidden: k.id == 'ostap' && hiddenForChild.contains(rid));
+        final ord = _oldOrder[key];
+        if (ord != null && ord.length == d.steps.length) {
+          d.steps = [for (final i in ord) d.steps[i]];
+          for (final pk in progress.keys.toList()) {
+            final a = pk.split('|');
+            if (a[0] == k.id && a.length == 3 && a[2] == rid && progress[pk]!.length == ord.length) {
+              final old = progress[pk]!;
+              progress[pk] = [for (final i in ord) old[i]];
+            }
+          }
+        }
+        final nm = _oldNames[key];
+        if (nm != null) {
+          for (final st in d.steps) {
+            final n = st.src != null && st.src! < nm.length ? nm[st.src!] : null;
+            if (n != null && n.isNotEmpty) st.name = n;
+          }
+        }
+        rdef[key] = d;
+      }
+    }
+    _oldOrder.clear();
+    _oldNames.clear();
+  }
+
+  final Map<String, List<int>> _oldOrder = {};
+  final Map<String, List<String?>> _oldNames = {};
 
   void _fromJson(Map<String, dynamic> j) {
     kids = [for (final k in (j['kids'] as List)) Kid.fromJson(k as Map<String, dynamic>)];
@@ -129,24 +241,30 @@ class AppState extends ChangeNotifier {
         e.key: {for (final r in (e.value as Map<String, dynamic>).entries) r.key: Sched.fromJson(r.value as Map<String, dynamic>)},
     };
     progress = {for (final e in (j['progress'] as Map<String, dynamic>).entries) e.key: [for (final v in (e.value as List)) v == true]};
-    names = {for (final e in (j['names'] as Map<String, dynamic>).entries) e.key: [for (final v in (e.value as List)) v as String?]};
-    order = {for (final e in (j['order'] as Map<String, dynamic>).entries) e.key: [for (final v in (e.value as List)) v as int]};
-    rorder = {for (final e in (j['rorder'] as Map<String, dynamic>).entries) e.key: [for (final v in (e.value as List)) v as String]};
+    rorder = {for (final e in ((j['rorder'] as Map<String, dynamic>?) ?? {}).entries) e.key: [for (final v in (e.value as List)) v as String]};
+    rdef = {for (final e in ((j['rdef'] as Map<String, dynamic>?) ?? {}).entries) e.key: RoutineDef.fromJson(e.value as Map<String, dynamic>)};
+    for (final e in ((j['order'] as Map<String, dynamic>?) ?? {}).entries) {
+      _oldOrder[e.key] = [for (final v in (e.value as List)) v as int];
+    }
+    for (final e in ((j['names'] as Map<String, dynamic>?) ?? {}).entries) {
+      _oldNames[e.key] = [for (final v in (e.value as List)) v as String?];
+    }
     notes = [for (final n in (j['notes'] as List)) Note.fromJson(n as Map<String, dynamic>)];
     simDay = (j['simDay'] as int?) ?? 0;
     ui = (j['ui'] as String?) ?? 'it';
+    micOk = (j['micOk'] as bool?) ?? false;
   }
 
   Map<String, dynamic> _toJson() => {
         'kids': [for (final k in kids) k.toJson()],
         'sched': {for (final e in sched.entries) e.key: {for (final r in e.value.entries) r.key: r.value.toJson()}},
+        'rdef': {for (final e in rdef.entries) e.key: e.value.toJson()},
         'progress': progress,
-        'names': names,
-        'order': order,
         'rorder': rorder,
         'notes': [for (final n in notes) n.toJson()],
         'simDay': simDay,
         'ui': ui,
+        'micOk': micOk,
       };
 
   void save({bool notify = true}) {
@@ -155,23 +273,63 @@ class AppState extends ChangeNotifier {
   }
 
   // ---------- Profiles ----------
-  Kid kidBy(String id) => kids.firstWhere((k) => k.id == id, orElse: () => kids.first);
+  Kid? kidOrNull(String id) => kids.where((k) => k.id == id).firstOrNull;
+  Kid kidBy(String id) => kidOrNull(id) ?? (kids.isNotEmpty ? kids.first : Kid(id: '', name: '', av: 'ostap', tint: kidTints.first, lang: ui, img: true));
   Kid get kid => kidBy(kidId);
 
   /// Language of the child's screens
   String get lang => kid.lang;
 
-  // ---------- Texts ----------
-  String tr(String key) => uiText[lang]![key] ?? key;
-  String routineName(String rid, [String? lg]) => routineNames[lg ?? lang]![rid]!;
-  String stepName(String kidId_, String rid, int i, [String? lg]) {
-    final custom = names['$kidId_|$rid'];
-    if (custom != null && i < custom.length && custom[i] != null && custom[i]!.isNotEmpty) return custom[i]!;
-    return stepNames[lg ?? lang]![rid]![i];
+  String addKid({required String name, required String av, String? photo, required String lang, required List<String> templates}) {
+    final id = 'k${DateTime.now().millisecondsSinceEpoch.toRadixString(36)}';
+    kids.add(Kid(id: id, name: name.trim(), av: av, photo: photo, tint: kidTints[kids.length % kidTints.length], lang: lang, img: true));
+    sched[id] = {};
+    for (final t in templates) {
+      addRoutineFrom(id, t, notify: false);
+    }
+    if (kidId.isEmpty || kidOrNull(kidId) == null) kidId = id;
+    save();
+    return id;
   }
 
-  String voice() => voiceOf[lang]!;
+  void deleteKid(String id) {
+    final pre = '$id|';
+    kids.removeWhere((k) => k.id == id);
+    sched.remove(id);
+    rorder.remove(id);
+    rdef.removeWhere((k, _) => k.startsWith(pre));
+    progress.removeWhere((k, _) => k.startsWith(pre));
+    notes.removeWhere((n) => n.kid == id);
+    if (kidId == id) kidId = kids.isNotEmpty ? kids.first.id : '';
+    save();
+  }
+
+  void updateKid(String id, void Function(Kid k) change) {
+    change(kidBy(id));
+    save();
+  }
+
+  // ---------- Texts ----------
+  String tr(String key) => uiText[lang]![key] ?? key;
   String l(String it, String uk) => ui == 'uk' ? uk : it;
+  String voice() => voiceOf[lang]!;
+
+  RoutineDef? def(String k, String rid) => rdef['$k|$rid'];
+
+  String routineName(String rid, [String? lg, String? k]) {
+    final d = def(k ?? kidId, rid);
+    if (d == null) return '';
+    return d.name ?? routineNames[lg ?? lang]![d.base] ?? '';
+  }
+
+  String stepName(String k, String rid, int i, [String? lg]) {
+    final d = def(k, rid);
+    if (d == null || i >= d.steps.length) return '';
+    final s = d.steps[i];
+    if (s.name != null && s.name!.isNotEmpty) return s.name!;
+    final list = stepNames[lg ?? lang]![d.base];
+    return (list != null && s.src != null && s.src! < list.length) ? list[s.src!] : '';
+  }
 
   // ---------- Dates ----------
   /// "Giorno per la prova" shows the day as if it were another weekday of this week
@@ -188,19 +346,20 @@ class AppState extends ChangeNotifier {
   Sched? schedOf(String k, String rid) => sched[k]?[rid];
 
   /// The kid's routines in mom's order (long-press and drag in Routine)
-  List<Routine> kidRoutines(String k) {
+  List<RoutineDef> kidRoutines(String k) {
     final o = rorder[k] ?? const <String>[];
     int pos(String id) {
       final i = o.indexOf(id);
-      return i < 0 ? 999 + routines.indexWhere((r) => r.id == id) : i;
+      final b = routines.indexWhere((r) => r.id == id);
+      return i < 0 ? 999 + (b < 0 ? 500 : b) : i;
     }
 
-    final list = routines.where((r) => schedOf(k, r.id) != null).toList();
-    list.sort((a, b) => pos(a.id) - pos(b.id));
-    return list;
+    final ids = (sched[k] ?? {}).keys.where((id) => rdef.containsKey('$k|$id')).toList()..sort((a, b) => pos(a) - pos(b));
+    return [for (final id in ids) rdef['$k|$id']!];
   }
 
-  List<Routine> childRoutines() => kidRoutines(kidId).where((r) => !hiddenForChild.contains(r.id)).toList();
+  /// What the child sees: routines that are switched on and have steps
+  List<RoutineDef> childRoutines() => kidRoutines(kidId).where((r) => !r.hidden && r.steps.isNotEmpty).toList();
 
   List<RoutineAt> routinesOn(String k, DateTime date) {
     final dw = dowOf(date);
@@ -209,8 +368,9 @@ class AppState extends ChangeNotifier {
       final slots = schedOf(k, r.id)!.slots.where((s) => s.d == dw);
       if (slots.isNotEmpty) list.add(RoutineAt(r, slots.first.t));
     }
+    // on a therapy day the therapy routine takes the place of "Vado a scuola"
     final out = list.where((x) {
-      final skip = skipIf[x.r.id];
+      final skip = x.r.skipIf;
       return skip == null || !skip.any((id) => list.any((y) => y.r.id == id));
     }).toList();
     out.sort((a, b) => toMin(a.t) - toMin(b.t));
@@ -219,13 +379,16 @@ class AppState extends ChangeNotifier {
 
   String _pKey(String k, DateTime d, String rid) => '$k|${dateKey(d)}|$rid';
   List<bool> progOf(String k, DateTime d, String rid) {
-    final n = routineById(rid).steps.length;
+    final n = def(k, rid)?.steps.length ?? 0;
     final p = progress[_pKey(k, d, rid)];
     if (p == null || p.length != n) return List<bool>.filled(n, false);
     return p;
   }
 
-  bool isDoneOn(String k, DateTime d, String rid) => progOf(k, d, rid).every((x) => x);
+  bool isDoneOn(String k, DateTime d, String rid) {
+    final p = progOf(k, d, rid);
+    return p.isNotEmpty && p.every((x) => x);
+  }
 
   // child screens: the playing kid, today
   List<bool> progressOf(String rid) => progOf(kidId, today(), rid);
@@ -249,36 +412,88 @@ class AppState extends ChangeNotifier {
     save();
   }
 
-  List<int> orderOf(String k, String rid) {
-    final n = routineById(rid).steps.length;
-    final o = order['$k|$rid'];
-    if (o == null || o.length != n) return List<int>.generate(n, (i) => i);
-    return o;
+  /// every saved day of one routine, so the marks follow the steps when they move
+  void _eachProgress(String k, String rid, void Function(List<bool> p) f) {
+    final n = def(k, rid)?.steps.length;
+    for (final e in progress.entries) {
+      final a = e.key.split('|');
+      if (a.length == 3 && a[0] == k && a[2] == rid && e.value.length == n) f(e.value);
+    }
   }
 
   void moveStep(String k, String rid, int from, int to) {
     if (from == to) return;
-    final o = List<int>.from(orderOf(k, rid));
-    final x = o.removeAt(from);
-    o.insert(to, x);
-    order['$k|$rid'] = o;
+    final d = def(k, rid)!;
+    _eachProgress(k, rid, (p) {
+      final y = p.removeAt(from);
+      p.insert(to, y);
+    });
+    final x = d.steps.removeAt(from);
+    d.steps.insert(to, x);
     save();
+  }
+
+  void removeStep(String k, String rid, int i) {
+    final d = def(k, rid)!;
+    _eachProgress(k, rid, (p) => p.removeAt(i));
+    d.steps.removeAt(i);
+    save();
+  }
+
+  void addStep(String k, String rid, StepDef s) {
+    final d = def(k, rid)!;
+    _eachProgress(k, rid, (p) => p.add(false));
+    d.steps.add(s);
+    save();
+  }
+
+  void setStepName(String k, String rid, int i, String name) {
+    final s = def(k, rid)!.steps[i];
+    s.name = name.trim().isEmpty ? null : name.trim();
+    save(notify: false);
+  }
+
+  String addRoutineFrom(String k, String base, {bool notify = true}) {
+    final t = routines.firstWhere((r) => r.id == base);
+    var rid = base;
+    if (sched[k]?.containsKey(rid) ?? false) rid = '${base}_${DateTime.now().millisecondsSinceEpoch.toRadixString(36)}';
+    rdef['$k|$rid'] = RoutineDef.fromTemplate(t, id: rid);
+    final slots = defaultSchedule()[base]?['slots'] as List?;
+    sched.putIfAbsent(k, () => {})[rid] = Sched(
+      slots == null ? [for (var d = 1; d <= 7; d++) Slot(d, '08:00')] : [for (final x in slots) Slot((x as Map)['d'] as int, x['t'] as String)],
+      false,
+    );
+    if (notify) save();
+    return rid;
+  }
+
+  String addBlankRoutine(String k) {
+    final rid = 'c${DateTime.now().millisecondsSinceEpoch.toRadixString(36)}';
+    rdef['$k|$rid'] = RoutineDef(id: rid, name: l('Nuova routine', 'Нова рутина'), cover: 'sun', tint: 0xFFE9F3E5, steps: []);
+    sched.putIfAbsent(k, () => {})[rid] = Sched([for (var d = 1; d <= 7; d++) Slot(d, '09:00')], false);
+    save();
+    return rid;
+  }
+
+  void deleteRoutine(String k, String rid) {
+    rdef.remove('$k|$rid');
+    sched[k]?.remove(rid);
+    rorder[k]?.remove(rid);
+    progress.removeWhere((key, _) {
+      final a = key.split('|');
+      return a.length == 3 && a[0] == k && a[2] == rid;
+    });
+    save();
+  }
+
+  void updateRoutine(String k, String rid, void Function(RoutineDef d) change, {bool notify = true}) {
+    change(def(k, rid)!);
+    save(notify: notify);
   }
 
   void setRoutineOrder(String k, List<String> ids) {
     rorder[k] = ids;
     save();
-  }
-
-  void setStepName(String k, String rid, int i, String name) {
-    final n = routineById(rid).steps.length;
-    final arr = List<String?>.from(names['$k|$rid'] ?? List<String?>.filled(n, null));
-    while (arr.length < n) {
-      arr.add(null);
-    }
-    arr[i] = name.trim().isEmpty ? null : name.trim();
-    names['$k|$rid'] = arr;
-    save(notify: false);
   }
 
   void toggleDay(String k, String rid, int d) {
@@ -338,10 +553,39 @@ class AppState extends ChangeNotifier {
     save();
   }
 
-  void updateKid(String id, void Function(Kid k) change) {
-    change(kidBy(id));
+  /// «Elimina tutti i dati»: the app opens as if just installed
+  Future<void> wipeAll() async {
+    await _prefs.remove(_key);
+    await _prefs.setBool(_wiped, true);
+    kids = [];
+    sched = {};
+    rdef = {};
+    progress = {};
+    rorder = {};
+    notes = [];
+    simDay = 0;
+    micOk = false;
+    kidId = '';
+    cameFromChild = false;
+    notifyListeners();
+  }
+
+  /// prototype only: Ostap's profile back
+  Future<void> restoreDemo() async {
+    await _prefs.remove(_wiped);
+    kids = [];
+    sched = {};
+    rdef = {};
+    progress = {};
+    rorder = {};
+    notes = [];
+    _seedDemo();
+    _migrate();
+    kidId = kids.first.id;
     save();
   }
+
+  void clearWiped() => _prefs.remove(_wiped);
 }
 
 class AppScope extends InheritedNotifier<AppState> {

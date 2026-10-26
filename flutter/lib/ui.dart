@@ -1,7 +1,11 @@
 // Design tokens and shared pieces – the same soft 3D language as the web prototype.
+import 'dart:io';
+
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import 'app_state.dart';
 import 'data.dart';
 
 class C {
@@ -55,6 +59,13 @@ String _hex(Color c) {
 
 Widget icon(String svg, double size, Color color) =>
     SvgPicture.string(svg.replaceAll('currentColor', _hex(color)), width: size, height: size);
+
+/// A photo the parent picked (a file on the device; a blob address in the web preview)
+Widget photoImage(String path, {BoxFit fit = BoxFit.cover}) =>
+    kIsWeb ? Image.network(path, fit: fit) : Image.file(File(path), fit: fit, errorBuilder: (_, __, ___) => const ColoredBox(color: C.surface));
+
+/// A step's picture: the parent's photo, or the picture from the set
+Widget stepPicture(StepDef s, {BoxFit fit = BoxFit.contain}) => s.photo != null ? photoImage(s.photo!) : picture(s.img, fit: fit);
 
 /// A picture by key: a 3D asset from assets/img, or a flat placeholder SVG
 Widget picture(String key, {BoxFit fit = BoxFit.contain}) {
@@ -211,9 +222,10 @@ class _CardPressState extends State<CardPress> {
 }
 
 class Avatar extends StatelessWidget {
-  const Avatar({super.key, this.size = navSize, this.av});
+  const Avatar({super.key, this.size = navSize, this.av, this.photo});
   final double size;
   final String? av;
+  final String? photo;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -221,7 +233,7 @@ class Avatar extends StatelessWidget {
         height: size,
         decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
         clipBehavior: Clip.antiAlias,
-        child: Transform.scale(scale: 1.12, child: Image.asset('assets/img/av_${av ?? 'ostap'}.webp', fit: BoxFit.cover)),
+        child: photo != null ? photoImage(photo!) : Transform.scale(scale: 1.12, child: Image.asset('assets/img/av_${av ?? 'ostap'}.webp', fit: BoxFit.cover)),
       );
 }
 

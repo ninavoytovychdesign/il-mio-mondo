@@ -11,6 +11,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'app_state.dart';
 import 'data.dart';
+import 'flows.dart';
 import 'screens.dart';
 import 'ui.dart';
 
@@ -340,17 +341,21 @@ class _MomShellState extends State<MomShell> {
   @override
   Widget build(BuildContext context) {
     final s = AppScope.of(context);
+    // no children yet (first start, or after «Elimina tutti i dati»): onboarding instead of the tabs
+    if (s.kids.isEmpty) return const Onboarding();
     if (s.kids.every((k) => k.id != momKid)) momKid = s.kids.first.id;
+    if (sub == _Sub.kid && s.kidOrNull(subId) == null) sub = _Sub.none;
+    if (sub == _Sub.editor && s.def(momKid, subId) == null) sub = _Sub.none;
     late final _Page page;
     switch (sub) {
       case _Sub.settings:
         page = _settings(s);
       case _Sub.editor:
         page = _Page(
-          title: s.routineName(subId, s.ui),
+          title: s.routineName(subId, s.ui, momKid),
           subtitle: '${s.l('Routine di', 'Рутина:')} ${s.kidBy(momKid).name}',
           back: closeSub,
-          extra: [PlainBtn(label: s.l('Anteprima', 'Перегляд'), onTap: () => previewRoutine(context, momKid, subId))],
+          extra: [PlainBtn(label: s.l('Anteprima', 'Перегляд'), onTap: (s.def(momKid, subId)?.steps.isEmpty ?? true) ? null : () => previewRoutine(context, momKid, subId))],
           body: RoutineEditor(key: ValueKey('$momKid|$subId'), kidId: momKid, rid: subId),
         );
       case _Sub.kid:
@@ -502,7 +507,7 @@ class _MomShellState extends State<MomShell> {
       _AddPlayer(
         title: s.l('Aggiungi un bambino', 'Додати дитину'),
         sub: s.l('Un profilo per ogni figlio', 'Окремий профіль для кожної дитини'),
-        onTap: () => toast(context, s.l('Aggiungere un profilo – nel prossimo passo', 'Додавання профілю – на наступному кроці')),
+        onTap: () => openAddKid(context, onAdded: (id) => setState(() => momKid = id)),
       ),
     ];
     return _Page(
@@ -558,8 +563,8 @@ class _MomShellState extends State<MomShell> {
         _DayRow(
           time: x.t,
           cover: x.r.cover,
-          coverTint: x.r.tint,
-          name: s.routineName(x.r.id, s.ui),
+          coverTint: Color(x.r.tint),
+          name: s.routineName(x.r.id, s.ui, momKid),
           done: s.isDoneOn(momKid, date, x.r.id),
           doneLabel: s.l('Fatta', 'Готово'),
           appt: appt && x.r.therapy ? s.l('Appuntamento', 'Візит') : null,
@@ -579,8 +584,8 @@ class _MomShellState extends State<MomShell> {
           const SizedBox(width: 16),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(therapyShort[s.ui]![x.r.id] ?? '', style: ts(18)),
-              Text('${s.l('Routine', 'Рутина')}: ${s.routineName(x.r.id, s.ui)}', style: ts(15, w: FontWeight.w500, color: C.ink2)),
+              Text(x.r.who ?? therapyShort[s.ui]![x.r.base ?? ''] ?? s.routineName(x.r.id, s.ui, momKid), style: ts(18)),
+              Text('${s.l('Routine', 'Рутина')}: ${s.routineName(x.r.id, s.ui, momKid)}', style: ts(15, w: FontWeight.w500, color: C.ink2)),
             ]),
           ),
         ]),
@@ -679,7 +684,7 @@ class _MomShellState extends State<MomShell> {
         PlainBtn(
           label: s.l('Nuova routine', 'Нова рутина'),
           svg: MI.plus,
-          onTap: () => toast(context, s.l('Creare una routine nuova – nel prossimo passo', 'Нова рутина – на наступному кроці')),
+          onTap: () => openNewRoutine(context, momKid, (rid) => openSub(_Sub.editor, rid)),
         ),
       ],
       body: list.isEmpty
@@ -700,7 +705,7 @@ class _MomShellState extends State<MomShell> {
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(color: Color(k.tint), borderRadius: BorderRadius.circular(rCard)),
           child: Column(children: [
-            Avatar(av: k.av, size: 112),
+            Avatar(av: k.av, photo: k.photo, size: 112),
             const SizedBox(height: 16),
             Text(k.name, style: ts(28)),
             const SizedBox(height: 16),
@@ -711,7 +716,7 @@ class _MomShellState extends State<MomShell> {
                 _fact(s.l('Lingua dei giochi', 'Мова ігор'), k.lang == 'uk' ? 'Українська' : 'Italiano'),
                 _fact(s.l("Suono toccando l'immagine", 'Звук від дотику до картинки'), k.img ? s.l('Sì', 'Так') : s.l('No', 'Ні')),
                 _fact(s.l('Routine', 'Рутини'), '${s.kidRoutines(k.id).length}'),
-                _fact(s.l('Libri sonori', 'Звукові книжечки'), '${books.length} ${s.l('visibili', 'видно')}'),
+                _fact(s.l('Libri sonori', 'Звукові книжечки'), '${(k.books ?? books).length} ${s.l('visibili', 'видно')}'),
               ]),
             ),
             const SizedBox(height: 16),
@@ -719,7 +724,7 @@ class _MomShellState extends State<MomShell> {
           ]),
         ),
       GestureDetector(
-        onTap: () => toast(context, s.l('Aggiungere un profilo – nel prossimo passo', 'Додавання профілю – на наступному кроці')),
+        onTap: () => openAddKid(context, onAdded: (id) => setState(() => momKid = id)),
         child: DashedBox(
           radius: rCard,
           padding: const EdgeInsets.all(24),
@@ -784,7 +789,47 @@ class _MomShellState extends State<MomShell> {
           ),
         ),
         const SizedBox(height: 24),
-        Panel(title: s.l('Crediti dei suoni', 'Звідки звуки'), text: soundCredits),
+        Panel(
+          title: s.l('Dati e privacy', 'Дані й приватність'),
+          text: s.l(
+              'Tutto resta su questo dispositivo: ${s.kids.length} profili, ${s.notes.length} note. Nessun account, niente viene inviato in rete. Le foto restano nella memoria dell\'app.',
+              'Усе зберігається лише на цьому пристрої: профілів – ${s.kids.length}, нотаток – ${s.notes.length}. Без акаунтів, нічого не надсилається в мережу. Фото лишаються в пам\'яті застосунку.'),
+        ),
+        const SizedBox(height: 24),
+        Panel(
+          title: s.l('Dati di esempio', 'Приклад даних'),
+          text: s.l('Rimette Ostap, Igor e Rossa con le loro routine. Quello che hai adesso viene sostituito.', 'Повертає Остапа, Ігоря й Россу з їхніми рутинами. Поточні дані буде замінено.'),
+          control: PlainBtn(
+            onBlock: true,
+            label: s.l('Carica esempio', 'Завантажити приклад'),
+            onTap: () async {
+              final ok = await confirmDialog(context,
+                  title: s.l('Caricare i dati di esempio?', 'Завантажити приклад?'),
+                  text: s.l('I profili, le routine e le note attuali verranno sostituiti.', 'Поточні профілі, рутини й нотатки буде замінено.'),
+                  ok: s.l('Carica', 'Завантажити'));
+              if (!ok) return;
+              s.restoreDemo();
+              closeSub();
+            },
+          ),
+        ),
+        const SizedBox(height: 24),
+        Panel(title: s.l('Informazioni', 'Про застосунок'), text: 'Il mio mondo 0.3\n$soundCredits'),
+        const SizedBox(height: 24),
+        DangerPanel(
+          title: s.l('Elimina tutti i dati', 'Видалити всі дані'),
+          text: s.l('Profili, routine, foto, progressi e diario. L\'app tornerà come appena installata.', 'Профілі, рутини, фото, прогрес і щоденник. Застосунок стане як щойно встановлений.'),
+          button: s.l('Elimina tutto', 'Видалити все'),
+          onTap: () async {
+            final ok = await confirmDialog(context,
+                title: s.l('Eliminare tutti i dati?', 'Видалити всі дані?'),
+                text: s.l('Non si può annullare.', 'Скасувати не можна.'),
+                ok: s.l('Elimina tutto', 'Видалити все'),
+                danger: true);
+            if (!ok) return;
+            await s.wipeAll();
+          },
+        ),
       ]),
     );
   }
@@ -995,7 +1040,7 @@ class _Player extends StatelessWidget {
         color: Color(kid.tint),
         padding: const EdgeInsets.fromLTRB(14, 14, 18, 14),
         child: Row(children: [
-          Avatar(av: kid.av, size: 84),
+          Avatar(av: kid.av, photo: kid.photo, size: 84),
           const SizedBox(width: 16),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -1088,6 +1133,11 @@ class _NoteComposerState extends State<NoteComposer> {
           if (mounted) toast(context, s.l('Nota vocale salvata', 'Голосову нотатку збережено'));
         }
         return;
+      }
+      if (!s.micOk) {
+        if (!await micExplain(context)) return;
+        s.micOk = true;
+        s.save(notify: false);
       }
       if (!await rec.hasPermission()) {
         if (mounted) toast(context, s.l('Il microfono non è disponibile', 'Мікрофон недоступний'));
@@ -1189,7 +1239,7 @@ class _NoteItemState extends State<NoteItem> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(rImg)),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Avatar(av: k.av, size: 40),
+        Avatar(av: k.av, photo: k.photo, size: 40),
         const SizedBox(width: 14),
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -1270,7 +1320,7 @@ class _RoutineGridState extends State<RoutineGrid> {
               Builder(key: ValueKey('rt-$id'), builder: (context) {
                 final dragging = id == _drag;
                 final rect = dragging ? _slot(_from, cols, w).shift(_offset) : _slot(ids.indexOf(id), cols, w);
-                final r = routineById(id);
+                final r = s.def(widget.kidId, id)!;
                 final sc = s.schedOf(widget.kidId, id)!;
                 return AnimatedPositioned(
                   key: ValueKey(id),
@@ -1328,11 +1378,11 @@ class _RoutineGridState extends State<RoutineGrid> {
                           boxShadow: dragging ? const [BoxShadow(color: Color(0x2E3E4C43), blurRadius: 28, offset: Offset(0, 12))] : const [],
                         ),
                         child: Row(children: [
-                          thumb(r.cover, w: isPhone(context) ? 64 : 88, h: isPhone(context) ? 52 : 68, r: 16, bg: flatArt.containsKey(r.cover) ? r.tint : Colors.white),
+                          thumb(r.cover, w: isPhone(context) ? 64 : 88, h: isPhone(context) ? 52 : 68, r: 16, bg: flatArt.containsKey(r.cover) ? Color(r.tint) : Colors.white),
                           const SizedBox(width: 16),
                           Expanded(
                             child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
-                              Text(s.routineName(id, s.ui), style: ts(18), maxLines: 1, overflow: TextOverflow.ellipsis),
+                              Text(s.routineName(id, s.ui, widget.kidId), style: ts(18), maxLines: 1, overflow: TextOverflow.ellipsis),
                               const SizedBox(height: 2),
                               Text(schedText(s, sc), style: ts(15, w: FontWeight.w500, color: C.ink2), maxLines: 1, overflow: TextOverflow.ellipsis),
                             ]),
@@ -1366,7 +1416,9 @@ class RoutineEditor extends StatefulWidget {
 }
 
 class _RoutineEditorState extends State<RoutineEditor> {
-  final Map<int, TextEditingController> _ctl = {};
+  final Map<StepDef, TextEditingController> _ctl = {};
+  TextEditingController? _name;
+  TextEditingController? _who;
   bool _perDay = false;
   String _ctlLang = '';
 
@@ -1375,10 +1427,12 @@ class _RoutineEditorState extends State<RoutineEditor> {
     for (final c in _ctl.values) {
       c.dispose();
     }
+    _name?.dispose();
+    _who?.dispose();
     super.dispose();
   }
 
-  TextEditingController _c(AppState s, int i) {
+  TextEditingController _c(AppState s, RoutineDef r, int i) {
     if (_ctlLang != s.ui) {
       // language changed: names come from the other language
       for (final c in _ctl.values) {
@@ -1387,7 +1441,7 @@ class _RoutineEditorState extends State<RoutineEditor> {
       _ctl.clear();
       _ctlLang = s.ui;
     }
-    return _ctl.putIfAbsent(i, () => TextEditingController(text: s.stepName(widget.kidId, widget.rid, i, s.ui)));
+    return _ctl.putIfAbsent(r.steps[i], () => TextEditingController(text: s.stepName(widget.kidId, widget.rid, i, s.ui)));
   }
 
   Future<void> _pickTime(AppState s, String current, {int? day}) async {
@@ -1410,6 +1464,7 @@ class _RoutineEditorState extends State<RoutineEditor> {
     }
     const by = ['', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'];
     String f(DateTime d) => '${d.year}${pad2(d.month)}${pad2(d.day)}T${pad2(d.hour)}${pad2(d.minute)}00';
+    final rname = s.routineName(widget.rid, s.ui, widget.kidId);
     return [
       for (final e in groups.entries)
         () {
@@ -1419,8 +1474,8 @@ class _RoutineEditorState extends State<RoutineEditor> {
           final p = e.key.split(':');
           final st0 = DateTime(first.year, first.month, first.day, int.parse(p[0]), int.parse(p[1]));
           final en = st0.add(const Duration(minutes: 30));
-          final text = '${s.kidBy(widget.kidId).name}: ${s.routineName(widget.rid, s.ui)}';
-          final details = '${s.l('Tra 10 minuti: ', 'За 10 хвилин: ')}${s.routineName(widget.rid, s.ui)}. Il mio mondo.';
+          final text = '${s.kidBy(widget.kidId).name}: $rname';
+          final details = '${s.l('Tra 10 minuti: ', 'За 10 хвилин: ')}$rname. Il mio mondo.';
           final url = 'https://calendar.google.com/calendar/render?action=TEMPLATE'
               '&text=${Uri.encodeComponent(text)}'
               '&dates=${f(st0)}/${f(en)}'
@@ -1432,68 +1487,122 @@ class _RoutineEditorState extends State<RoutineEditor> {
     ];
   }
 
+  Widget _stepThumb(StepDef st) => st.photo != null
+      ? Container(width: 56, height: 56, decoration: BoxDecoration(borderRadius: BorderRadius.circular(14)), clipBehavior: Clip.antiAlias, child: photoImage(st.photo!))
+      : thumb(st.img, w: 56, h: 56, bg: Color(st.tint), scale: 0.86);
+
+  Future<void> _deleteStep(AppState s, RoutineDef r, int i) async {
+    final name = s.stepName(widget.kidId, widget.rid, i, s.ui);
+    final last = r.steps.length == 1;
+    final ok = await confirmDialog(context,
+        title: s.l('Eliminare il passo?', 'Видалити крок?'),
+        text: '«$name»${last ? ' – ${s.l("è l'ultimo: la routine resterà vuota e il bambino non la vedrà.", 'він останній: рутина стане порожньою, і дитина її не побачить.')}' : ''}',
+        ok: s.l('Elimina', 'Видалити'),
+        danger: true);
+    if (!ok) return;
+    _ctl.remove(r.steps[i])?.dispose();
+    s.removeStep(widget.kidId, widget.rid, i);
+  }
+
+  Future<void> _deleteRoutine(AppState s) async {
+    final k = s.kidBy(widget.kidId);
+    final name = s.routineName(widget.rid, s.ui, widget.kidId);
+    final ok = await confirmDialog(context,
+        title: s.l('Eliminare «$name»?', 'Видалити «$name»?'),
+        text: s.l('${k.name} non la vedrà più. Non si può annullare.', '${k.name} більше її не побачить. Скасувати не можна.'),
+        ok: s.l('Elimina routine', 'Видалити рутину'),
+        danger: true);
+    if (!ok || !mounted) return;
+    s.deleteRoutine(widget.kidId, widget.rid);
+    toast(context, s.l('Routine eliminata', 'Рутину видалено'));
+  }
+
+  Widget _switchRow(String title, String sub, bool on, VoidCallback onTap) => Row(children: [
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(title, style: ts(18)),
+            Text(sub, style: ts(15, w: FontWeight.w500, color: C.ink2)),
+          ]),
+        ),
+        const SizedBox(width: 12),
+        Toggle(on: on, label: title, onTap: onTap),
+      ]);
+
   @override
   Widget build(BuildContext context) {
     final s = AppScope.of(context);
-    final r = routineById(widget.rid);
-    final sc = s.schedOf(widget.kidId, widget.rid)!;
+    final r = s.def(widget.kidId, widget.rid);
+    final sc = s.schedOf(widget.kidId, widget.rid);
+    if (r == null || sc == null) return const SizedBox.shrink();
     final k = s.kidBy(widget.kidId);
-    final ord = s.orderOf(widget.kidId, widget.rid);
+    _name ??= TextEditingController(text: s.routineName(widget.rid, s.ui, widget.kidId));
+    _who ??= TextEditingController(text: r.who ?? therapyShort[s.ui]![r.base ?? ''] ?? '');
     final on = {for (final x in sc.slots) x.d};
     final same = sc.slots.every((x) => x.t == (sc.slots.isNotEmpty ? sc.slots.first.t : ''));
     final perDay = _perDay || !same;
     final links = sc.slots.isNotEmpty ? _calendarLinks(s) : const <MapEntry<String, String>>[];
 
-    final steps = ReorderableListView(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      buildDefaultDragHandles: false,
-      proxyDecorator: (child, index, anim) => Material(
-        color: Colors.transparent,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(rImg),
-            boxShadow: const [BoxShadow(color: Color(0x293E4C43), blurRadius: 24, offset: Offset(0, 10))],
-          ),
-          child: child,
-        ),
-      ),
-      onReorder: (from, to) {
-        if (to > from) to -= 1;
-        s.moveStep(widget.kidId, widget.rid, from, to);
-      },
-      children: [
-        for (var pos = 0; pos < ord.length; pos++)
-          Padding(
-            key: ValueKey('step-${ord[pos]}'),
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(8, 8, 10, 8),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(rImg)),
-              child: Row(children: [
-                ReorderableDragStartListener(
-                  index: pos,
-                  child: Semantics(
-                    label: '${s.l('Trascina per spostare', 'Перетягни, щоб перемістити')}: ${s.stepName(widget.kidId, widget.rid, ord[pos], s.ui)}',
-                    child: SizedBox(width: 44, height: 56, child: Center(child: icon(MI.grip, 24, C.ink3))),
-                  ),
+    final steps = r.steps.isEmpty
+        ? emptyNote(s.l("Ancora nessun passo. Aggiungi il primo: un'immagine e il nome che il tablet dirà ad alta voce.", 'Кроків ще немає. Додай перший: картинку й назву, яку планшет промовить.'))
+        : ReorderableListView(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            buildDefaultDragHandles: false,
+            proxyDecorator: (child, index, anim) => Material(
+              color: Colors.transparent,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(rImg),
+                  boxShadow: const [BoxShadow(color: Color(0x293E4C43), blurRadius: 24, offset: Offset(0, 10))],
                 ),
-                const SizedBox(width: 12),
-                thumb(r.steps[ord[pos]].img, w: 56, h: 56, bg: r.steps[ord[pos]].tint, scale: 0.86),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TextField(
-                    controller: _c(s, ord[pos]),
-                    style: ts(18),
-                    decoration: const InputDecoration(border: InputBorder.none, isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 10)),
-                    onChanged: (v) => s.setStepName(widget.kidId, widget.rid, ord[pos], v),
-                  ),
-                ),
-              ]),
+                child: child,
+              ),
             ),
-          ),
-      ],
-    );
+            onReorder: (from, to) {
+              if (to > from) to -= 1;
+              s.moveStep(widget.kidId, widget.rid, from, to);
+            },
+            children: [
+              for (var pos = 0; pos < r.steps.length; pos++)
+                Padding(
+                  key: ObjectKey(r.steps[pos]),
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Container(
+                    padding: const EdgeInsets.fromLTRB(8, 8, 4, 8),
+                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(rImg)),
+                    child: Row(children: [
+                      ReorderableDragStartListener(
+                        index: pos,
+                        child: Semantics(
+                          label: '${s.l('Trascina per spostare', 'Перетягни, щоб перемістити')}: ${s.stepName(widget.kidId, widget.rid, pos, s.ui)}',
+                          child: SizedBox(width: isPhone(context) ? 32 : 44, height: 56, child: Center(child: icon(MI.grip, 24, C.ink3))),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      _stepThumb(r.steps[pos]),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextField(
+                          controller: _c(s, r, pos),
+                          maxLength: stepMax,
+                          style: ts(isPhone(context) ? 16 : 18),
+                          decoration: const InputDecoration(border: InputBorder.none, isDense: true, counterText: '', contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 10)),
+                          onChanged: (v) => s.setStepName(widget.kidId, widget.rid, pos, v),
+                        ),
+                      ),
+                      Semantics(
+                        button: true,
+                        label: s.l('Elimina passo', 'Видалити крок'),
+                        child: GestureDetector(
+                          onTap: () => _deleteStep(s, r, pos),
+                          child: SizedBox(width: 44, height: 44, child: Center(child: icon(MI.trash, 20, C.ink3))),
+                        ),
+                      ),
+                    ]),
+                  ),
+                ),
+            ],
+          );
 
     Widget timeField(String t, {int? day}) => Press(
           onTap: () => _pickTime(s, t, day: day),
@@ -1509,6 +1618,60 @@ class _RoutineEditorState extends State<RoutineEditor> {
             Text(t, style: ts(20)),
           ]),
         );
+
+    final details = Box(title: s.l('Dettagli', 'Деталі'), children: [
+      lbl(s.l('Nome della routine', 'Назва рутини')),
+      textField(
+        controller: _name!,
+        hint: s.l('Nome della routine', 'Назва рутини'),
+        max: stepMax,
+        white: true,
+        onChanged: (v) {
+          if (v.trim().isNotEmpty) s.updateRoutine(widget.kidId, widget.rid, (d) => d.name = v.trim(), notify: false);
+        },
+      ),
+      lbl(s.l('Immagine', 'Картинка')),
+      Wrap(spacing: 8, runSpacing: 8, children: [
+        for (final c in coverKeys)
+          Semantics(
+            button: true,
+            selected: r.cover == c,
+            child: GestureDetector(
+              onTap: () => s.updateRoutine(widget.kidId, widget.rid, (d) => d.cover = c),
+              child: Container(
+                width: isPhone(context) ? 64 : 56,
+                height: isPhone(context) ? 64 : 56,
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(color: r.cover == c ? C.pGreen : Colors.white, borderRadius: BorderRadius.circular(14)),
+                foregroundDecoration: r.cover == c ? BoxDecoration(borderRadius: BorderRadius.circular(14), border: Border.all(color: C.success, width: 3)) : null,
+                child: picture(c),
+              ),
+            ),
+          ),
+      ]),
+      _switchRow(
+        s.l('Mostra al bambino', 'Показувати дитині'),
+        s.l('Spenta: la routine resta qui, ma ${k.name} non la vede', 'Вимкнено: рутина лишається тут, але ${k.name} її не бачить'),
+        !r.hidden,
+        () => s.updateRoutine(widget.kidId, widget.rid, (d) => d.hidden = !d.hidden),
+      ),
+      _switchRow(
+        s.l('È un appuntamento', 'Це візит'),
+        s.l('Terapia, medico: compare in Appuntamenti e nel calendario', "Терапія, лікар: з'являється у «Візитах» і в календарі"),
+        r.therapy,
+        () => s.updateRoutine(widget.kidId, widget.rid, (d) => d.therapy = !d.therapy),
+      ),
+      if (r.therapy) ...[
+        lbl(s.l('Da chi', 'До кого')),
+        textField(
+          controller: _who!,
+          hint: s.l('Per esempio: la logopedista', 'Наприклад: логопед'),
+          max: nameMax,
+          white: true,
+          onChanged: (v) => s.updateRoutine(widget.kidId, widget.rid, (d) => d.who = v.trim().isEmpty ? null : v.trim(), notify: false),
+        ),
+      ],
+    ]);
 
     final sortedSlots = List<Slot>.from(sc.slots)..sort((a, b) => a.d - b.d);
     final when = Box(warm: true, title: s.l('Quando', 'Коли'), children: [
@@ -1543,15 +1706,7 @@ class _RoutineEditorState extends State<RoutineEditor> {
           if (sc.slots.length > 1)
             PlainBtn(small: true, onBlock: true, label: s.l('Ora diversa per giorno', 'Різний час по днях'), onTap: () => setState(() => _perDay = true)),
         ]),
-      Row(children: [
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(s.l('Promemoria sul telefono', 'Нагадування на телефон'), style: ts(18)),
-            Text(s.l('10 minuti prima', 'За 10 хвилин'), style: ts(15, w: FontWeight.w500, color: C.ink2)),
-          ]),
-        ),
-        Toggle(on: sc.bell, label: s.l('Promemoria sul telefono', 'Нагадування на телефон'), onTap: () => s.toggleBell(widget.kidId, widget.rid)),
-      ]),
+      _switchRow(s.l('Promemoria sul telefono', 'Нагадування на телефон'), s.l('10 minuti prima', 'За 10 хвилин'), sc.bell, () => s.toggleBell(widget.kidId, widget.rid)),
       if (links.isNotEmpty) ...[
         if (links.length > 1) lbl(s.l('Aggiungi a Google Calendar', 'Додати в Google Календар')),
         for (final l in links)
@@ -1567,25 +1722,52 @@ class _RoutineEditorState extends State<RoutineEditor> {
       noteText('${k.name} ${s.l("vede questa routine solo nei giorni scelti. Il promemoria arriva dal calendario del telefono: se cambi l'ora, aggiungila di nuovo.", 'бачить цю рутину лише у вибрані дні. Нагадування приходить з календаря телефона: якщо змінюєш час, додай подію ще раз.')}'),
     ]);
 
+    final danger = DangerPanel(
+      title: s.l('Elimina routine', 'Видалити рутину'),
+      text: s.l('Spariscono i passi, le foto e i segni di oggi. Il diario resta.', 'Зникнуть кроки, фото й сьогоднішні позначки. Щоденник лишиться.'),
+      button: s.l('Elimina', 'Видалити'),
+      onTap: () => _deleteRoutine(s),
+    );
+
     return cols(
       context,
       Box(title: s.l('Passi', 'Кроки'), children: [
         steps,
         Align(
           alignment: Alignment.centerLeft,
-          child: PlainBtn(
-            onBlock: true,
-            svg: MI.plus,
-            label: s.l('Aggiungi passo', 'Додати крок'),
-            onTap: () => toast(context, s.l('Aggiungere passi con le foto – nel prossimo passo', 'Додавання кроків із фото – на наступному кроці')),
-          ),
+          child: PlainBtn(onBlock: true, svg: MI.plus, label: s.l('Aggiungi passo', 'Додати крок'), onTap: () => openAddStep(context, widget.kidId, widget.rid)),
         ),
         noteText('${s.l("Il nome del passo è anche quello che il tablet dice ad alta voce. L'ordine qui è l'ordine che vede", 'Назву кроку планшет промовляє вголос. Порядок тут – той, який бачить')} ${k.name}.'),
       ]),
-      when,
+      Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [details, const SizedBox(height: 24), when, const SizedBox(height: 24), danger]),
       even: true,
     );
   }
+}
+
+/// Red zone at the bottom of a screen: what will be lost and the button
+class DangerPanel extends StatelessWidget {
+  const DangerPanel({super.key, required this.title, required this.text, required this.button, required this.onTap});
+  final String title;
+  final String text;
+  final String button;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: EdgeInsets.symmetric(horizontal: isPhone(context) ? 16 : 24, vertical: isPhone(context) ? 16 : 20),
+        decoration: BoxDecoration(color: const Color(0xFFFCEFE9), borderRadius: BorderRadius.circular(isPhone(context) ? 24 : rCard)),
+        child: LayoutBuilder(builder: (context, box) {
+          final txt = Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(title, style: ts(20, color: const Color(0xFF8A3B12))),
+            const SizedBox(height: 2),
+            noteText(text),
+          ]);
+          final btn = DangerBtn(label: button, onTap: onTap);
+          if (box.maxWidth < 520) return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [txt, const SizedBox(height: 14), btn]);
+          return Row(children: [Expanded(child: txt), const SizedBox(width: 24), btn]);
+        }),
+      );
 }
 
 // =====================================================================
@@ -1630,29 +1812,73 @@ class _KidProfileState extends State<KidProfile> {
     });
   }
 
+  Future<void> _delete(AppState s, Kid k) async {
+    final n = s.notesFor(k.id).length, r = s.kidRoutines(k.id).length, last = s.kids.length == 1;
+    final ok = await confirmDialog(context,
+        title: s.l('Eliminare il profilo di ${k.name}?', 'Видалити профіль ${k.name}?'),
+        text: s.l('Spariscono $r routine, i progressi e $n note del diario. Non si può annullare.', 'Зникнуть рутини ($r), прогрес і нотатки щоденника ($n). Скасувати не можна.') +
+            (last ? ' ${s.l("È l'ultimo profilo: l'app tornerà alla schermata iniziale.", 'Це останній профіль: застосунок повернеться до початкового екрана.')}' : ''),
+        ok: s.l('Elimina profilo', 'Видалити профіль'),
+        danger: true);
+    if (!ok || !mounted) return;
+    final name = k.name;
+    s.deleteKid(k.id);
+    if (s.kids.isNotEmpty) toast(context, s.l('Profilo di $name eliminato', 'Профіль $name видалено'));
+  }
+
   @override
   Widget build(BuildContext context) {
     final s = AppScope.of(context);
     final k = s.kidBy(widget.kidId);
     if (_name.text.isEmpty) _name.text = k.name;
+    final vis = k.books ?? List<int>.generate(books.length, (i) => i);
+    final avSize = isPhone(context) ? 56.0 : 72.0;
+    Widget avBtn({required bool on, required Widget child, required VoidCallback onTap, required String label}) => Semantics(
+          button: true,
+          selected: on,
+          label: label,
+          child: GestureDetector(
+            onTap: onTap,
+            child: Container(
+              width: avSize,
+              height: avSize,
+              decoration: const BoxDecoration(shape: BoxShape.circle, color: C.surface),
+              foregroundDecoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: on ? _action : C.nav, width: on ? 4 : 2)),
+              clipBehavior: Clip.antiAlias,
+              child: child,
+            ),
+          ),
+        );
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Panel(
         title: s.l('Nome', "Ім'я"),
         control: Container(
-          width: 240,
+          width: isPhone(context) ? double.infinity : 240,
           height: 52,
           padding: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
           child: Center(
             child: TextField(
               controller: _name,
+              maxLength: nameMax,
               style: ts(18),
-              decoration: const InputDecoration(border: InputBorder.none, isDense: true),
-              onSubmitted: (v) => s.updateKid(k.id, (x) => x.name = v.trim().isEmpty ? x.name : v.trim()),
+              decoration: const InputDecoration(border: InputBorder.none, isDense: true, counterText: ''),
+              onSubmitted: (v) {
+                if (v.trim().isEmpty) {
+                  _name.text = k.name;
+                  toast(context, s.l('Il nome non può essere vuoto', "Ім'я не може бути порожнім"));
+                  return;
+                }
+                s.updateKid(k.id, (x) => x.name = v.trim());
+              },
               onTapOutside: (_) {
                 FocusScope.of(context).unfocus();
                 final v = _name.text.trim();
-                if (v.isNotEmpty && v != k.name) s.updateKid(k.id, (x) => x.name = v);
+                if (v.isEmpty) {
+                  _name.text = k.name;
+                } else if (v != k.name) {
+                  s.updateKid(k.id, (x) => x.name = v);
+                }
               },
             ),
           ),
@@ -1661,23 +1887,22 @@ class _KidProfileState extends State<KidProfile> {
       const SizedBox(height: 24),
       Panel(
         title: s.l('Avatar', 'Аватар'),
-        text: s.l('Al posto della foto – dal set di prova', 'Замість фото – з тестового набору'),
-        control: Row(mainAxisSize: MainAxisSize.min, children: [
-          for (final a in avatars) ...[
-            if (a != avatars.first) const SizedBox(width: 12),
-            Semantics(
-              button: true,
-              selected: k.av == a,
-              label: 'Avatar $a',
-              child: GestureDetector(
-                onTap: () => s.updateKid(k.id, (x) => x.av = a),
-                child: Container(
-                  foregroundDecoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: k.av == a ? _action : C.nav, width: k.av == a ? 4 : 2)),
-                  child: Avatar(av: a, size: 72),
-                ),
-              ),
-            ),
-          ],
+        text: s.l('Un avatar del set o una tua foto', 'Аватар із набору або своє фото'),
+        control: Wrap(spacing: 12, runSpacing: 12, children: [
+          for (final a in avatars)
+            avBtn(on: k.photo == null && k.av == a, label: 'Avatar $a', onTap: () => s.updateKid(k.id, (x) {
+                  x.av = a;
+                  x.photo = null;
+                }), child: Avatar(av: a, size: avSize)),
+          avBtn(
+            on: k.photo != null,
+            label: s.l('La tua foto', 'Своє фото'),
+            onTap: () async {
+              final p = await pickPhoto(context);
+              if (p != null) s.updateKid(k.id, (x) => x.photo = p);
+            },
+            child: k.photo != null ? photoImage(k.photo!) : Center(child: icon(MI.plus, 28, C.navInk)),
+          ),
         ]),
       ),
       const SizedBox(height: 24),
@@ -1702,6 +1927,44 @@ class _KidProfileState extends State<KidProfile> {
       ),
       const SizedBox(height: 24),
       Panel(
+        title: s.l('Libri sonori', 'Звукові книжечки'),
+        text: s.l('Quali libri vede ${k.name}', 'Які книжечки бачить ${k.name}'),
+        control: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 520),
+          child: Wrap(spacing: 8, runSpacing: 8, children: [
+            for (var i = 0; i < books.length; i++)
+              Semantics(
+                button: true,
+                selected: vis.contains(i),
+                child: GestureDetector(
+                  onTap: () {
+                    final v = List<int>.from(vis);
+                    if (v.contains(i)) {
+                      if (v.length == 1) {
+                        toast(context, s.l('Lascia almeno un libro', 'Залиш хоча б одну книжечку'));
+                        return;
+                      }
+                      v.remove(i);
+                    } else {
+                      v.add(i);
+                    }
+                    v.sort();
+                    s.updateKid(k.id, (x) => x.books = v);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    decoration: vis.contains(i)
+                        ? soft3d(_action, radius: BorderRadius.circular(999))
+                        : BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(999), border: Border.all(color: C.nav, width: 2)),
+                    child: Text(bookNames[s.ui]![i], style: ts(15, w: vis.contains(i) ? FontWeight.w700 : FontWeight.w600, color: vis.contains(i) ? Colors.white : C.ink2)),
+                  ),
+                ),
+              ),
+          ]),
+        ),
+      ),
+      const SizedBox(height: 24),
+      Panel(
         title: s.l('La giornata di oggi', 'Сьогоднішній день'),
         text: s.l('Azzera i passi segnati di oggi in tutte le routine', 'Знімає сьогоднішні позначки в усіх рутинах'),
         control: PlainBtn(
@@ -1713,6 +1976,13 @@ class _KidProfileState extends State<KidProfile> {
           },
           onTap: () => _reset(s),
         ),
+      ),
+      const SizedBox(height: 24),
+      DangerPanel(
+        title: s.l('Elimina profilo', 'Видалити профіль'),
+        text: s.l('Spariscono le routine, i progressi e le note di ${k.name}', 'Зникнуть рутини, прогрес і нотатки ${k.name}'),
+        button: s.l('Elimina', 'Видалити'),
+        onTap: () => _delete(s, k),
       ),
     ]);
   }

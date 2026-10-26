@@ -191,7 +191,7 @@ Map<String, Map<String, dynamic>> defaultSchedule() => {
       'nanna': _s(_all, '20:30', true),
     };
 // On a therapy day the therapy routine takes the place of "Vado a scuola"
-const Map<String, List<String>> skipIf = {'scuola': ['logo', 'fisio']};
+const Map<String, List<String>> skipIfDefault = {'scuola': ['logo', 'fisio']};
 const Map<String, Map<String, String>> therapyShort = {
   'it': {'logo': 'Natalina', 'fisio': 'Ilaria'},
   'uk': {'logo': 'Наталіна', 'fisio': 'Іларія'},

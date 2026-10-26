@@ -12,6 +12,7 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   path_provider: any
+  image_picker: any
   record: any
   url_launcher: any
   flutter_svg: any
