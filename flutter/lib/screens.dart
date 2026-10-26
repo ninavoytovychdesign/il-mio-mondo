@@ -699,7 +699,8 @@ class _StepView extends StatelessWidget {
           Expanded(child: Align(alignment: Alignment.centerLeft, child: Text(name, style: ts(28)))),
           const SizedBox(width: 16),
           Center(child: lamp),
-          const SizedBox(width: 12),
+          // room for the lamp's glow, so it is not cut at the screen edge
+          const SizedBox(width: 28),
         ],
       );
     }
