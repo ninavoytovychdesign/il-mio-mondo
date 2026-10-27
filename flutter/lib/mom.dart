@@ -381,6 +381,15 @@ class _MomShellState extends State<MomShell> {
           'bambini' => _kids(s),
           _ => _oggi(s),
         };
+        if (tab == 'cal' || tab == 'diario' || tab == 'routine') {
+          page = _Page(
+            title: page.title,
+            subtitle: page.subtitle,
+            back: page.back,
+            extra: page.extra,
+            body: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [_kidSwitch(s), const SizedBox(height: 20), page.body]),
+          );
+        }
     }
     final pad = isPhone(context) ? 20.0 : (isPortrait(context) ? 32.0 : 40.0);
     return PopScope(
@@ -422,6 +431,50 @@ class _MomShellState extends State<MomShell> {
         ),
       ),
     );
+  }
+
+  /// Whose routines, calendar and notes the parent is looking at: one pill per child
+  Widget _kidSwitch(AppState s) {
+    final phone = isPhone(context);
+    final one = s.kids.length == 1;
+    Widget pill(Kid k) {
+      final on = k.id == momKid;
+      return Semantics(
+        button: !one,
+        selected: on,
+        label: k.name,
+        child: GestureDetector(
+          onTap: one || on ? null : () => setState(() => momKid = k.id),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            padding: EdgeInsets.fromLTRB(6, 6, phone ? 16 : 20, 6),
+            decoration: BoxDecoration(
+              color: on ? Color(k.tint) : Colors.white,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: on ? C.navInk : C.nav, width: 2),
+            ),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Avatar(av: k.av, photo: k.photo, size: phone ? 34 : 40),
+              const SizedBox(width: 10),
+              Text(k.name, style: ts(phone ? 16 : 18, w: on ? FontWeight.w800 : FontWeight.w600, color: on ? C.ink : C.ink2)),
+            ]),
+          ),
+        ),
+      );
+    }
+
+    return Row(children: [
+      Text(s.l('Bambino:', 'Дитина:'), style: ts(phone ? 16 : 18, w: FontWeight.w600, color: C.ink2)),
+      const SizedBox(width: 12),
+      Expanded(
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(children: [
+            for (final k in s.kids) ...[if (k != s.kids.first) const SizedBox(width: 10), pill(k)],
+          ]),
+        ),
+      ),
+    ]);
   }
 
   Widget _header(AppState s, _Page p) {
@@ -541,7 +594,9 @@ class _MomShellState extends State<MomShell> {
             final w = (box.maxWidth - 24 * (n - 1)) / n;
             return Wrap(spacing: 24, runSpacing: 16, children: [for (final p in players) SizedBox(width: w, child: p)]);
           }),
-          const SizedBox(height: 24),
+          const SizedBox(height: 32),
+          _kidSwitch(s),
+          const SizedBox(height: 20),
           cols(
             even: true,
             context,
@@ -652,7 +707,7 @@ class _MomShellState extends State<MomShell> {
     );
     return _Page(
       title: s.l('Calendario', 'Календар'),
-      subtitle: '${s.kidBy(momKid).name} · ${s.l('settimana dal', 'тиждень з')} ${mon.day} ${monthNames[s.ui]![mon.month - 1]}',
+      subtitle: '${s.l('Settimana dal', 'Тиждень з')} ${mon.day} ${monthNames[s.ui]![mon.month - 1]}',
       body: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         week,
         const SizedBox(height: 24),
