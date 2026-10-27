@@ -85,20 +85,20 @@ BoxDecoration soft3d(Color color, {BorderRadius? radius, bool circle = false, bo
       color: color,
       shape: circle ? BoxShape.circle : BoxShape.rectangle,
       borderRadius: circle ? null : radius,
-      boxShadow: (pressed || flat) ? const [] : const [BoxShadow(color: Color(0x1A3E4C43), blurRadius: 3, offset: Offset(0, 1))],
     );
 
 BoxDecoration soft3dOverlay({BorderRadius? radius, bool circle = false, bool pressed = false}) => BoxDecoration(
       shape: circle ? BoxShape.circle : BoxShape.rectangle,
       borderRadius: circle ? null : radius,
-      gradient: LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: pressed
-            ? const [Color(0x293E4C43), Color(0x003E4C43), Color(0x003E4C43)]
-            : const [Color(0x66FFFFFF), Color(0x00FFFFFF), Color(0x00000000), Color(0x12000000)],
-        stops: pressed ? const [0, 0.12, 1] : const [0, 0.08, 0.9, 1],
-      ),
+      // flat like the screens in Figma; only the pressed state gets a soft inner shade on top
+      gradient: pressed
+          ? const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0x293E4C43), Color(0x003E4C43), Color(0x003E4C43)],
+              stops: [0, 0.12, 1],
+            )
+          : null,
     );
 
 /// Generic pressable surface (buttons and cards)
