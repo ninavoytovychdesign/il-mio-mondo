@@ -354,7 +354,7 @@ class _MomShellState extends State<MomShell> {
     if (s.kids.every((k) => k.id != momKid)) momKid = s.kids.first.id;
     if (sub == _Sub.kid && s.kidOrNull(subId) == null) sub = _Sub.none;
     if (sub == _Sub.editor && s.def(momKid, subId) == null) sub = _Sub.none;
-    late final _Page page;
+    late _Page page;
     switch (sub) {
       case _Sub.settings:
         page = _settings(s);
