@@ -527,11 +527,12 @@ class _MomShellState extends State<MomShell> {
           const SizedBox(height: 16),
           LayoutBuilder(builder: (context, box) {
             final n = box.maxWidth < 560 ? 1 : 2;
-            final w = (box.maxWidth - 16 * (n - 1)) / n;
-            return Wrap(spacing: 16, runSpacing: 16, children: [for (final p in players) SizedBox(width: w, child: p)]);
+            final w = (box.maxWidth - 24 * (n - 1)) / n;
+            return Wrap(spacing: 24, runSpacing: 16, children: [for (final p in players) SizedBox(width: w, child: p)]);
           }),
           const SizedBox(height: 24),
           cols(
+            even: true,
             context,
             Box(title: s.l('Routine di oggi', 'Рутини на сьогодні'), gap: 12, children: _dayRows(s, d)),
             Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -645,6 +646,7 @@ class _MomShellState extends State<MomShell> {
         week,
         const SizedBox(height: 24),
         cols(
+          even: true,
           context,
           Box(title: s.longDate(sel), gap: 12, children: _dayRows(s, sel, appt: true)),
           Box(warm: true, title: s.l('Note del giorno', 'Нотатки дня'), gap: 12, children: [
