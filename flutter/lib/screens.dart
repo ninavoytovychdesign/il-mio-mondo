@@ -103,7 +103,7 @@ class HomeScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('PASETTO', style: ts(15, w: FontWeight.w600, color: C.ink2, spacing: 0.9)),
-                    Text(s.tr('homeTitle'), style: ts(isPhone(context) ? 28 : 40), maxLines: 2, overflow: TextOverflow.ellipsis),
+                    Text(s.tr('homeTitle'), style: ts(isPhone(context) ? 24 : 40, height: 1.1), maxLines: 2, overflow: TextOverflow.ellipsis),
                   ],
                 ),
               ),
@@ -470,7 +470,7 @@ class _BookScreenState extends State<BookScreen> with _KeepAwake<BookScreen> {
             children: [
               NavBtn(svg: Ic.back, round: false, label: s.tr('prevPage'), onTap: _page > 0 ? () => _turn(-1) : null),
               const SizedBox(width: 16),
-              Expanded(child: Text(name, style: ts(isPhone(context) ? 28 : 36), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis)),
+              Expanded(child: Text(name, style: ts(isPhone(context) ? 26 : 36), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis)),
               const SizedBox(width: 16),
               NavBtn(svg: Ic.next, round: false, label: s.tr('nextPage'), onTap: _page < _pages.length - 1 ? () => _turn(1) : null),
             ],
@@ -752,21 +752,21 @@ class _StepView extends StatelessWidget {
       ),
     );
     final phone = isPhone(context);
-    final lamp = Lamp(on: done, current: current, size: phone ? 76 : (row ? 120 : 108), label: labelDone, onTap: onLamp);
+    final lamp = Lamp(on: done, current: current, size: phone ? 60 : (row ? 120 : 108), label: labelDone, onTap: onLamp);
     if (row) {
       return Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (phone)
-            LayoutBuilder(builder: (context, box) => SizedBox(width: math.min(box.maxHeight, 150), child: Center(child: AspectRatio(aspectRatio: 1, child: pic))))
+            LayoutBuilder(builder: (context, box) => SizedBox(width: math.min(box.maxHeight, math.min(130, MediaQuery.sizeOf(context).width * 0.32)), child: Center(child: AspectRatio(aspectRatio: 1, child: pic))))
           else
             AspectRatio(aspectRatio: 1, child: pic),
-          SizedBox(width: phone ? 14 : 20),
-          Expanded(child: Align(alignment: Alignment.centerLeft, child: Text(name, style: ts(phone ? 20 : 28)))),
-          const SizedBox(width: 16),
+          SizedBox(width: phone ? 12 : 20),
+          Expanded(child: Align(alignment: Alignment.centerLeft, child: Text(name, style: ts(phone ? 18 : 28, height: 1.15), maxLines: 3, overflow: TextOverflow.ellipsis))),
+          SizedBox(width: phone ? 8 : 16),
           Center(child: lamp),
           // room for the lamp's glow, so it is not cut at the screen edge
-          SizedBox(width: phone ? 20 : 28),
+          SizedBox(width: phone ? 14 : 28),
         ],
       );
     }

@@ -89,7 +89,7 @@ class PlainBtn extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         if (svg != null) ...[icon(svg!, 22, fg), const SizedBox(width: 10)],
-        Flexible(child: Text(label, style: ts(small ? 17 : 20, color: fg, height: 1.1), maxLines: 1, overflow: TextOverflow.ellipsis)),
+        Flexible(child: Text(label, style: ts(small ? 17 : (isPhone(context) ? 18 : 20), color: fg, height: 1.1), maxLines: 1, overflow: TextOverflow.ellipsis)),
       ],
     );
     return Press(
@@ -97,7 +97,7 @@ class PlainBtn extends StatelessWidget {
       color: bg,
       radius: 999,
       height: small ? 44 : 56,
-      padding: EdgeInsets.symmetric(horizontal: small ? 20 : 28),
+      padding: EdgeInsets.symmetric(horizontal: small ? 20 : (isPhone(context) ? 20 : 28)),
       child: Center(widthFactor: expand ? null : 1, child: row),
     );
   }
@@ -156,7 +156,9 @@ class Seg extends StatelessWidget {
   final ValueChanged<String> onChanged;
 
   @override
-  Widget build(BuildContext context) => Container(
+  Widget build(BuildContext context) {
+    final phone = isPhone(context);
+    final seg = Container(
         padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(color: C.nav, borderRadius: BorderRadius.circular(999)),
         child: Row(
@@ -170,7 +172,7 @@ class Seg extends StatelessWidget {
                   button: true,
                   selected: o.key == value,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                    padding: EdgeInsets.symmetric(horizontal: phone ? 14 : 22, vertical: 12),
                     decoration: o.key == value ? soft3d(Colors.white, radius: BorderRadius.circular(999)) : null,
                     foregroundDecoration: o.key == value ? soft3dOverlay(radius: BorderRadius.circular(999)) : null,
                     child: Text(o.value, style: ts(17, w: o.key == value ? FontWeight.w700 : FontWeight.w600, color: o.key == value ? C.ink : C.ink2)),
@@ -181,6 +183,8 @@ class Seg extends StatelessWidget {
           ],
         ),
       );
+    return phone ? SingleChildScrollView(scrollDirection: Axis.horizontal, child: seg) : seg;
+  }
 }
 
 /// Settings row: title and explanation on the left, the control on the right (wraps under on narrow screens)
@@ -192,7 +196,7 @@ class Panel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        padding: EdgeInsets.symmetric(horizontal: isPhone(context) ? 18 : 24, vertical: isPhone(context) ? 16 : 20),
         decoration: BoxDecoration(color: C.cardGreen, borderRadius: BorderRadius.circular(rCard)),
         child: LayoutBuilder(builder: (context, box) {
           final txt = Column(
@@ -750,7 +754,7 @@ class _MomShellState extends State<MomShell> {
     ];
     return _Page(
       title: s.l('Bambini', 'Діти'),
-      subtitle: s.l('Profili su questo tablet', 'Профілі на цьому планшеті'),
+      subtitle: s.l('Profili su questo dispositivo', 'Профілі на цьому пристрої'),
       body: LayoutBuilder(builder: (context, box) {
         final n = isPortrait(context) ? 1 : 2;
         final w = (box.maxWidth - 24 * (n - 1)) / n;
@@ -771,7 +775,7 @@ class _MomShellState extends State<MomShell> {
   _Page _settings(AppState s) {
     return _Page(
       title: s.l('Impostazioni', 'Налаштування'),
-      subtitle: s.l('Valgono per tutto il tablet', 'Діють для всього планшета'),
+      subtitle: s.l('Valgono per tutto il dispositivo', 'Діють для всього пристрою'),
       back: closeSub,
       body: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Panel(
@@ -1393,7 +1397,7 @@ class _RoutineGridState extends State<RoutineGrid> {
                           const SizedBox(width: 16),
                           Expanded(
                             child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
-                              Text(s.routineName(id, s.ui, widget.kidId), style: ts(18), maxLines: 1, overflow: TextOverflow.ellipsis),
+                              Text(s.routineName(id, s.ui, widget.kidId), style: ts(18, height: 1.15), maxLines: 2, overflow: TextOverflow.ellipsis),
                               const SizedBox(height: 2),
                               Text(schedText(s, sc), style: ts(15, w: FontWeight.w500, color: C.ink2), maxLines: 1, overflow: TextOverflow.ellipsis),
                             ]),
@@ -1596,6 +1600,8 @@ class _RoutineEditorState extends State<RoutineEditor> {
                         child: TextField(
                           controller: _c(s, r, pos),
                           maxLength: stepMax,
+                          minLines: 1,
+                          maxLines: 2,
                           style: ts(isPhone(context) ? 16 : 18),
                           decoration: const InputDecoration(border: InputBorder.none, isDense: true, counterText: '', contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 10)),
                           onChanged: (v) => s.setStepName(widget.kidId, widget.rid, pos, v),

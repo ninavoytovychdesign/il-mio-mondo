@@ -41,7 +41,12 @@ class IlMioMondoApp extends StatelessWidget {
         ),
         // The layout is designed for fixed text sizes; the system font scale would break the cards
         builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(context).copyWith(textScaler: TextScaler.noScaling),
+          // phones get slightly smaller type: the screens are designed for the tablet first
+          data: MediaQuery.of(context).copyWith(
+            textScaler: MediaQuery.sizeOf(context).shortestSide < 600
+                ? TextScaler.linear(MediaQuery.sizeOf(context).shortestSide < 380 ? 0.86 : 0.9)
+                : TextScaler.noScaling,
+          ),
           child: child!,
         ),
         // Date and time pickers in the parents' language
