@@ -233,6 +233,13 @@ class AppState extends ChangeNotifier {
     for (final d in rdef.values) {
       if ((d.base == 'logo' || d.base == 'fisio') && (d.cover == 'blocks' || d.cover == 'teddy')) d.cover = 'commbook';
     }
+    // once: speech therapy gets the play table with puzzles
+    if (coverRev < 1) {
+      for (final d in rdef.values) {
+        if (d.base == 'logo' && d.cover == 'commbook') d.cover = 'appt_table';
+      }
+      coverRev = 1;
+    }
   }
 
   final Map<String, List<int>> _oldOrder = {};
@@ -257,7 +264,11 @@ class AppState extends ChangeNotifier {
     simDay = (j['simDay'] as int?) ?? 0;
     ui = (j['ui'] as String?) ?? 'it';
     micOk = (j['micOk'] as bool?) ?? false;
+    coverRev = (j['coverRev'] as int?) ?? 0;
   }
+
+  /// which one-time cover updates were already applied
+  int coverRev = 0;
 
   Map<String, dynamic> _toJson() => {
         'kids': [for (final k in kids) k.toJson()],
@@ -268,6 +279,7 @@ class AppState extends ChangeNotifier {
         'notes': [for (final n in notes) n.toJson()],
         'simDay': simDay,
         'ui': ui,
+        'coverRev': coverRev,
         'micOk': micOk,
       };
 
