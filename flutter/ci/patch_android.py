@@ -17,6 +17,9 @@ if 'android:scheme="https"' not in s:
 # nothing leaves the device: no Android cloud backup of the app data
 if 'android:allowBackup' not in s:
     s = s.replace('<application', '<application android:allowBackup="false"', 1)
+# diary translation: ML Kit downloads the Italian and Ukrainian models once
+if 'android.permission.INTERNET' not in s:
+    s = s.replace('<application', '<uses-permission android:name="android.permission.INTERNET" />\n    <application', 1)
 # voice notes in the Diary
 if 'RECORD_AUDIO' not in s:
     s = s.replace('<application', '<uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <application', 1)

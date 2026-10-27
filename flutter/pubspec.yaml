@@ -20,6 +20,7 @@ dependencies:
   flutter_tts: any
   shared_preferences: any
   wakelock_plus: any
+  google_mlkit_translation: any
 
 dev_dependencies:
   flutter_launcher_icons: any

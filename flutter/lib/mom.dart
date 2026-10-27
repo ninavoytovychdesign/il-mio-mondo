@@ -13,6 +13,7 @@ import 'app_state.dart';
 import 'data.dart';
 import 'flows.dart';
 import 'screens.dart';
+import 'translate.dart';
 import 'ui.dart';
 
 // ---------- Icons used only here ----------
@@ -1278,6 +1279,25 @@ class NoteItem extends StatefulWidget {
 
 class _NoteItemState extends State<NoteItem> {
   bool _playing = false;
+  bool _original = false; // the parent asked to see the text as it was written
+  bool _working = false;
+  String? _failedFor; // the language a translation could not be made for (no model, no internet)
+
+  /// Fetch the translation into [to] once and keep it with the note
+  void _translate(AppState s, Note n, String from, String to) {
+    if (_working || _failedFor == to || !NoteTranslator.instance.available) return;
+    _working = true;
+    NoteTranslator.instance.translate(n.text, from, to).then((out) {
+      _working = false;
+      if (out != null) {
+        n.tr[to] = out;
+        s.save(notify: false);
+      } else {
+        _failedFor = to;
+      }
+      if (mounted) setState(() {});
+    });
+  }
 
   @override
   void dispose() {
@@ -1294,6 +1314,42 @@ class _NoteItemState extends State<NoteItem> {
       if (mounted) setState(() => _playing = false);
     });
     setState(() => _playing = true);
+  }
+
+  /// The note in the language of the interface: translated on the device, with a link to the original
+  List<Widget> _text(AppState s, Note n) {
+    final from = noteLang(n.text);
+    final to = s.ui;
+    final body = ts(16, w: FontWeight.w500, height: 1.45);
+    final small = ts(14, w: FontWeight.w600, color: C.ink2);
+    if (from == to) return [SelectableText(n.text, style: body)];
+    final tr = n.tr[to];
+    if (tr == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _translate(s, n, from, to));
+      final why = !NoteTranslator.instance.available
+          ? null
+          : _failedFor == to
+              ? s.l('Traduzione non riuscita: la prima volta serve internet per scaricare la lingua.', 'Не вдалося перекласти: першого разу потрібен інтернет, щоб завантажити мову.')
+              : s.l('Sto traducendo…', 'Перекладаю…');
+      return [
+        SelectableText(n.text, style: body),
+        if (why != null) ...[const SizedBox(height: 4), Text(why, style: small)],
+      ];
+    }
+    final fromName = from == 'uk' ? s.l('dall\'ucraino', 'з української') : s.l('dall\'italiano', 'з італійської');
+    return [
+      SelectableText(_original ? n.text : tr, style: body),
+      const SizedBox(height: 4),
+      GestureDetector(
+        onTap: () => setState(() => _original = !_original),
+        child: Text(
+          _original
+              ? s.l('Mostra la traduzione', 'Показати переклад')
+              : '${s.l('Tradotto', 'Перекладено')} $fromName · ${s.l('Mostra l\'originale', 'Показати оригінал')}',
+          style: small.copyWith(decoration: TextDecoration.underline, decorationColor: C.ink3),
+        ),
+      ),
+    ];
   }
 
   @override
@@ -1318,7 +1374,7 @@ class _NoteItemState extends State<NoteItem> {
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(meta.toUpperCase(), style: ts(13, color: C.ink2, spacing: 0.5)),
             const SizedBox(height: 2),
-            if (n.text.isNotEmpty) SelectableText(n.text, style: ts(16, w: FontWeight.w500, height: 1.45)),
+            if (n.text.isNotEmpty) ..._text(s, n),
             if (hasAudio) ...[
               const SizedBox(height: 8),
               Align(

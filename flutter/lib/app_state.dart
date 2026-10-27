@@ -122,15 +122,17 @@ class RoutineDef {
 }
 
 class Note {
-  Note({required this.id, required this.kid, required this.date, required this.ts, required this.text, this.audio});
+  Note({required this.id, required this.kid, required this.date, required this.ts, required this.text, this.audio, Map<String, String>? tr}) : tr = tr ?? {};
   final String id;
   final String kid;
   final String date;
   final int ts;
   final String text;
   final String? audio; // path of the voice recording on the device
+  /// translations of [text] made on the device, by language ('it', 'uk')
+  final Map<String, String> tr;
 
-  Map<String, dynamic> toJson() => {'id': id, 'kid': kid, 'date': date, 'ts': ts, 'text': text, 'audio': audio};
+  Map<String, dynamic> toJson() => {'id': id, 'kid': kid, 'date': date, 'ts': ts, 'text': text, 'audio': audio, if (tr.isNotEmpty) 'tr': tr};
   static Note fromJson(Map<String, dynamic> j) => Note(
         id: j['id'] as String,
         kid: j['kid'] as String,
@@ -138,6 +140,7 @@ class Note {
         ts: j['ts'] as int,
         text: (j['text'] as String?) ?? '',
         audio: j['audio'] as String?,
+        tr: {for (final e in ((j['tr'] as Map<String, dynamic>?) ?? {}).entries) e.key: e.value as String},
       );
 }
 
