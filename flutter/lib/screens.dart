@@ -365,7 +365,7 @@ class _Tile extends StatelessWidget {
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    Center(child: FractionallySizedBox(heightFactor: scale, widthFactor: 1, child: picture(image))),
+                    if (isPhotoKey(image)) picture(image) else Center(child: FractionallySizedBox(heightFactor: scale, widthFactor: 1, child: picture(image))),
                     if (done) const Positioned(top: 12, right: 12, child: DoneBadge()),
                   ],
                 ),

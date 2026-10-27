@@ -67,8 +67,12 @@ Widget photoImage(String path, {BoxFit fit = BoxFit.cover}) =>
 /// A step's picture: the parent's photo, or the picture from the set
 Widget stepPicture(StepDef s, {BoxFit fit = BoxFit.contain}) => s.photo != null ? photoImage(s.photo!) : picture(s.img, fit: fit);
 
+/// A routine cover can be the parent's own photo: kept as 'photo:<path>'
+bool isPhotoKey(String key) => key.startsWith('photo:');
+
 /// A picture by key: a 3D asset from assets/img, or a flat placeholder SVG
 Widget picture(String key, {BoxFit fit = BoxFit.contain}) {
+  if (isPhotoKey(key)) return photoImage(key.substring(6));
   final flat = flatArt[key];
   if (flat != null) return SvgPicture.string(flat, fit: fit);
   return Image.asset('assets/img/$key.webp', fit: fit, filterQuality: FilterQuality.medium);
