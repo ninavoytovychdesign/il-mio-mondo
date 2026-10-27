@@ -1,5 +1,8 @@
-# Il mio mondo
+# Pasetto
 
-PWA per i libri sonori e la giornata. Si apre da https://ninavoytovychdesign.github.io/il-mio-mondo/
+Наочні рутини й звукові книжечки для маленьких дітей. Android-застосунок на Flutter (раніше «Il mio mondo»).
 
-Suoni e crediti: vedi «Bambini e impostazioni» nell'app.
+- Документація: [docs/](docs/README.md)
+- Код застосунку: [flutter/](flutter/)
+- Політика конфіденційності: https://ninavoytovychdesign.github.io/il-mio-mondo/privacy/
+- Перша PWA-версія: https://ninavoytovychdesign.github.io/il-mio-mondo/
