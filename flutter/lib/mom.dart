@@ -721,31 +721,34 @@ class _MomShellState extends State<MomShell> {
   _Page _kids(AppState s) {
     final cards = <Widget>[
       for (final k in s.kids)
-        Container(
+        GestureDetector(
+          onTap: s.kids.length > 1 && k.id != momKid ? () => setState(() => momKid = k.id) : null,
+          child: Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             color: Color(k.tint),
             borderRadius: BorderRadius.circular(rCard),
-            border: s.kids.length > 1 && k.id == momKid ? Border.all(color: C.navInk, width: 3) : null,
+            border: Border.all(color: s.kids.length > 1 && k.id == momKid ? C.navInk : Colors.transparent, width: 3),
           ),
           child: Column(children: [
-            if (s.kids.length > 1) ...[
+            if (s.kids.length > 1)
               Align(
-                alignment: Alignment.centerRight,
-                child: k.id == momKid
-                    ? Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(999)),
-                        child: Row(mainAxisSize: MainAxisSize.min, children: [
-                          const DoneBadge(size: 22),
-                          const SizedBox(width: 8),
-                          Text(s.l('Mostrato in Oggi e Calendario', 'Показано в «Сьогодні» і «Календарі»'), style: ts(14, w: FontWeight.w700)),
-                        ]),
-                      )
-                    : PlainBtn(small: true, label: s.l('Mostra in Oggi e Calendario', 'Показувати в «Сьогодні» і «Календарі»'), onTap: () => setState(() => momKid = k.id)),
+                alignment: Alignment.topRight,
+                child: Semantics(
+                  selected: k.id == momKid,
+                  label: s.l('Mostra in Oggi e Calendario', 'Показувати в «Сьогодні» і «Календарі»'),
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: k.id == momKid ? C.navInk : Colors.white,
+                      shape: BoxShape.circle,
+                      border: k.id == momKid ? null : Border.all(color: C.ring, width: 2),
+                    ),
+                    child: k.id == momKid ? const Icon(Icons.check_rounded, color: Colors.white, size: 24) : null,
+                  ),
+                ),
               ),
-              const SizedBox(height: 8),
-            ],
             Avatar(av: k.av, photo: k.photo, size: 112),
             const SizedBox(height: 16),
             Text(k.name, style: ts(28)),
@@ -763,6 +766,7 @@ class _MomShellState extends State<MomShell> {
             const SizedBox(height: 16),
             PlainBtn(label: s.l('Modifica', 'Змінити'), onBlock: true, onTap: () => openSub(_Sub.kid, k.id)),
           ]),
+        ),
         ),
       GestureDetector(
         onTap: () => openAddKid(context, onAdded: (id) => setState(() => momKid = id)),
@@ -788,7 +792,9 @@ class _MomShellState extends State<MomShell> {
     ];
     return _Page(
       title: s.l('Bambini', 'Діти'),
-      subtitle: s.l('Profili su questo dispositivo', 'Профілі на цьому пристрої'),
+      subtitle: s.kids.length > 1
+          ? s.l('Tocca un profilo per vedere le sue routine, il calendario e il diario', 'Торкнись профілю, щоб бачити його рутини, календар і щоденник')
+          : s.l('Profili su questo dispositivo', 'Профілі на цьому пристрої'),
       body: LayoutBuilder(builder: (context, box) {
         final n = isPortrait(context) ? 1 : 2;
         final w = (box.maxWidth - 24 * (n - 1)) / n;
