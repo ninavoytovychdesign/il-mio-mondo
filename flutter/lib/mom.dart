@@ -20,6 +20,7 @@ class MI {
   static const gear = r'<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 7h9M17 7h3M4 17h3M11 17h9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="15" cy="7" r="2.2" stroke="currentColor" stroke-width="2"/><circle cx="9" cy="17" r="2.2" stroke="currentColor" stroke-width="2"/></svg>';
   static const play = r'<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg>';
   static const stop = r'<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="7" y="7" width="10" height="10" rx="2" fill="currentColor"/></svg>';
+  static const check = r'<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="m6 12.5 4 4 8-9" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   static const camera = r'<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 8.5A2.5 2.5 0 0 1 6.5 6h1.8l1.4-2h4.6l1.4 2h1.8A2.5 2.5 0 0 1 20 8.5v9a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 17.5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="12.8" r="3.3" stroke="currentColor" stroke-width="2"/></svg>';
   static const plus = r'<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>';
   static const mic = r'<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="9" y="3.5" width="6" height="11" rx="3" stroke="currentColor" stroke-width="2"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v2.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
@@ -745,7 +746,7 @@ class _MomShellState extends State<MomShell> {
                       shape: BoxShape.circle,
                       border: k.id == momKid ? null : Border.all(color: C.ring, width: 2),
                     ),
-                    child: k.id == momKid ? const Icon(Icons.check_rounded, color: Colors.white, size: 24) : null,
+                    child: k.id == momKid ? Center(child: icon(MI.check, 22, Colors.white)) : null,
                   ),
                 ),
               ),
