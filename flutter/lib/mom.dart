@@ -478,8 +478,17 @@ class _MomShellState extends State<MomShell> {
       ['bambini', s.l('Bambini', 'Діти'), MI.tKids, MI.fKids],
     ];
     final phone = isPhone(context);
+    // every tab gets the width of the longest label (bold), so the bar never shifts
+    double itemW = 0;
+    if (!phone) {
+      for (final t in tabs) {
+        final tp = TextPainter(text: TextSpan(text: t[1], style: ts(14, w: FontWeight.w800)), textDirection: TextDirection.ltr, maxLines: 1)..layout();
+        if (tp.width > itemW) itemW = tp.width;
+      }
+      itemW = itemW.ceilToDouble() + 2 * 22;
+    }
     return Container(
-      height: phone ? 68 : 80,
+      height: phone ? 68 : 88,
       margin: EdgeInsets.symmetric(horizontal: phone ? 12 : 0),
       padding: EdgeInsets.all(phone ? 6 : 8),
       decoration: BoxDecoration(
@@ -492,9 +501,10 @@ class _MomShellState extends State<MomShell> {
         mainAxisSize: phone ? MainAxisSize.max : MainAxisSize.min,
         children: [
           for (final t in tabs) ...[
-            if (t != tabs.first) SizedBox(width: phone ? 2 : 4),
+            if (t != tabs.first) SizedBox(width: phone ? 2 : 6),
             _expandIf(phone, _DockItem(
               compact: phone,
+              width: phone ? null : itemW,
               label: t[1],
               svg: (tab == t[0] && sub != _Sub.settings) ? t[3] : t[2],
               on: tab == t[0] && sub != _Sub.settings,
@@ -865,8 +875,9 @@ class _Page {
 }
 
 class _DockItem extends StatelessWidget {
-  const _DockItem({required this.label, required this.svg, required this.on, required this.onTap, this.compact = false});
+  const _DockItem({required this.label, required this.svg, required this.on, required this.onTap, this.compact = false, this.width});
   final bool compact;
+  final double? width;
   final String label;
   final String svg;
   final bool on;
@@ -881,14 +892,14 @@ class _DockItem extends StatelessWidget {
           behavior: HitTestBehavior.opaque,
           onTap: onTap,
           child: Container(
-            constraints: BoxConstraints(minWidth: compact ? 0 : 84),
-            padding: EdgeInsets.symmetric(horizontal: compact ? 2 : 10, vertical: compact ? 4 : 6),
+            width: width,
+            padding: EdgeInsets.symmetric(horizontal: compact ? 2 : 22, vertical: compact ? 4 : 8),
             decoration: on ? soft3d(C.nav, radius: BorderRadius.circular(999)) : null,
             foregroundDecoration: on ? soft3dOverlay(radius: BorderRadius.circular(999)) : null,
             child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-              icon(svg, compact ? 22 : 24, on ? C.ink : C.ink2),
+              icon(svg, compact ? 22 : 26, on ? C.ink : C.ink2),
               const SizedBox(height: 4),
-              Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(compact ? 11 : 13, w: on ? FontWeight.w800 : FontWeight.w600, color: on ? C.ink : C.ink2, height: 1.1)),
+              Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: ts(compact ? 11 : 14, w: on ? FontWeight.w800 : FontWeight.w600, color: on ? C.ink : C.ink2, height: 1.1)),
             ]),
           ),
         ),
@@ -1008,7 +1019,7 @@ class _DayRow extends StatelessWidget {
       child: Row(children: [
         SizedBox(width: isPhone(context) ? 46 : 56, child: Text(time, style: ts(isPhone(context) ? 16 : 18, w: done ? FontWeight.w600 : FontWeight.w700, color: done ? C.ink3 : C.ink))),
         SizedBox(width: isPhone(context) ? 10 : 16),
-        thumb(cover, w: isPhone(context) ? 44 : 56, h: isPhone(context) ? 40 : 48, bg: flatArt.containsKey(cover) ? coverTint : C.surface),
+        thumb(cover, w: isPhone(context) ? 56 : 84, h: isPhone(context) ? 48 : 68, r: isPhone(context) ? 14 : 18, bg: flatArt.containsKey(cover) ? coverTint : C.surface),
         SizedBox(width: isPhone(context) ? 10 : 16),
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
