@@ -915,6 +915,10 @@ class _WeekDay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fg = selected ? Colors.white : C.ink;
+    final phone = isPhone(context);
+    final r = BorderRadius.circular(phone ? 12 : 16);
+    // at most 4 dots, appointments first, so they always fit the tile
+    final shown = ([...dots]..sort((a, b) => (b ? 1 : 0) - (a ? 1 : 0))).take(4).toList();
     return GestureDetector(
       onTap: onTap,
       child: Semantics(
@@ -923,10 +927,10 @@ class _WeekDay extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
           decoration: selected
-              ? soft3d(_action, radius: BorderRadius.circular(rImg))
+              ? soft3d(_action, radius: r)
               : BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(rImg),
+                  borderRadius: r,
                   border: Border.all(color: today ? C.ink3 : C.nav, width: 2),
                 ),
           child: Column(children: [
@@ -937,11 +941,11 @@ class _WeekDay extends StatelessWidget {
             SizedBox(
               height: 8,
               child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                for (final ap in dots)
+                for (final ap in shown)
                   Container(
-                    width: 6,
-                    height: 6,
-                    margin: const EdgeInsets.symmetric(horizontal: 1.5),
+                    width: phone ? 5 : 6,
+                    height: phone ? 5 : 6,
+                    margin: EdgeInsets.symmetric(horizontal: phone ? 1 : 1.5),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: selected ? const Color(0xD9FFFFFF) : (ap ? const Color(0xFFC4673B) : C.ink3),
@@ -987,7 +991,7 @@ class _DayRow extends StatelessWidget {
         const SizedBox(width: 6),
         Text(doneLabel, style: ts(15, color: C.ink2)),
       ]);
-    } else if (appt != null) {
+    } else if (appt != null && !isPhone(context)) {
       right = Container(
         padding: EdgeInsets.symmetric(horizontal: isPhone(context) ? 10 : 14, vertical: isPhone(context) ? 4 : 6),
         decoration: BoxDecoration(color: _peach, borderRadius: BorderRadius.circular(999)),
@@ -1003,7 +1007,19 @@ class _DayRow extends StatelessWidget {
         SizedBox(width: isPhone(context) ? 10 : 16),
         thumb(cover, w: isPhone(context) ? 44 : 56, h: isPhone(context) ? 40 : 48, bg: flatArt.containsKey(cover) ? coverTint : C.surface),
         SizedBox(width: isPhone(context) ? 10 : 16),
-        Expanded(child: Text(name, style: ts(isPhone(context) ? 16 : 18), maxLines: 2, overflow: TextOverflow.ellipsis)),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+            Text(name, style: ts(isPhone(context) ? 16 : 18, height: 1.15), maxLines: 2, overflow: TextOverflow.ellipsis),
+            if (appt != null && !done && isPhone(context)) ...[
+              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(color: _peach, borderRadius: BorderRadius.circular(999)),
+                child: Text(appt!, style: ts(12, w: FontWeight.w800, color: _apptInk)),
+              ),
+            ],
+          ]),
+        ),
         if (right != null) ...[const SizedBox(width: 12), right],
       ]),
     );
