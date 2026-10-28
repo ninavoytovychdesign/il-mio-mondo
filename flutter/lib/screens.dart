@@ -399,16 +399,60 @@ class _BookScreenState extends State<BookScreen> with _KeepAwake<BookScreen> {
   int _playId = 0;
   int? _pointer;
   int _lastHit = 0;
+  // swipe on the picture: the card follows the finger, a long or quick swipe turns the page
+  int? _swipePointer;
+  double _downX = 0;
+  int _downT = 0;
+  double _dx = 0;
+  bool _dragging = false;
+  int _dir = 1; // where the new page comes from: 1 – from the right, -1 – from the left
 
   List<String> get _pages => books[widget.book];
 
   void _turn(int d) {
+    final next = math.max(0, math.min(_pages.length - 1, _page + d));
+    if (next == _page) return;
     Sound.instance.stop();
     setState(() {
-      _page = math.max(0, math.min(_pages.length - 1, _page + d));
+      _dir = d > 0 ? 1 : -1;
+      _page = next;
       _playId++;
       _playing = false;
     });
+  }
+
+  void _swipeStart(PointerDownEvent e) {
+    if (_swipePointer != null) return;
+    _swipePointer = e.pointer;
+    _downX = e.position.dx;
+    _downT = DateTime.now().millisecondsSinceEpoch;
+  }
+
+  void _swipeMove(PointerMoveEvent e) {
+    if (e.pointer != _swipePointer) return;
+    var dx = e.position.dx - _downX;
+    if (!_dragging && dx.abs() < 12) return;
+    // at the first and the last page the card only gives a little
+    if ((dx > 0 && _page == 0) || (dx < 0 && _page == _pages.length - 1)) dx *= 0.25;
+    setState(() {
+      _dragging = true;
+      _dx = dx;
+    });
+  }
+
+  void _swipeEnd(PointerEvent e) {
+    if (e.pointer != _swipePointer) return;
+    _swipePointer = null;
+    if (!_dragging) return;
+    final w = MediaQuery.sizeOf(context).width;
+    final dt = math.max(1, DateTime.now().millisecondsSinceEpoch - _downT);
+    final far = _dx.abs() > w * 0.18 || (_dx.abs() > 40 && _dx.abs() / dt > 0.5);
+    final d = _dx < 0 ? 1 : -1;
+    setState(() {
+      _dragging = false;
+      _dx = 0;
+    });
+    if (far) _turn(d);
   }
 
   // Fires on touch (no need to release). The first finger or palm on the button or the picture counts,
@@ -478,16 +522,45 @@ class _BookScreenState extends State<BookScreen> with _KeepAwake<BookScreen> {
           const SizedBox(height: 32),
           Expanded(
             child: Listener(
-              onPointerDown: (e) => _hit(e, picture: true),
-              onPointerUp: _release,
-              onPointerCancel: _release,
+              onPointerDown: (e) {
+                _swipeStart(e);
+                _hit(e, picture: true);
+              },
+              onPointerMove: _swipeMove,
+              onPointerUp: (e) {
+                _swipeEnd(e);
+                _release(e);
+              },
+              onPointerCancel: (e) {
+                _swipeEnd(e);
+                _release(e);
+              },
               child: Semantics(
                 image: true,
                 label: name,
-                child: Container(
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(rCard)),
-                  clipBehavior: Clip.antiAlias,
-                  child: Transform.scale(scale: 1.12, child: picture(key)),
+                child: AnimatedContainer(
+                  duration: _dragging ? Duration.zero : const Duration(milliseconds: 220),
+                  curve: Curves.easeOut,
+                  transform: Matrix4.translationValues(_dx, 0, 0),
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 260),
+                    switchInCurve: Curves.easeOut,
+                    switchOutCurve: Curves.easeIn,
+                    transitionBuilder: (child, anim) {
+                      final incoming = child.key == ValueKey(_page);
+                      final from = Offset(incoming ? 0.35 * _dir : -0.35 * _dir, 0);
+                      return FadeTransition(
+                        opacity: anim,
+                        child: SlideTransition(position: Tween<Offset>(begin: from, end: Offset.zero).animate(anim), child: child),
+                      );
+                    },
+                    child: Container(
+                      key: ValueKey(_page),
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(rCard)),
+                      clipBehavior: Clip.antiAlias,
+                      child: Transform.scale(scale: 1.12, child: picture(key)),
+                    ),
+                  ),
                 ),
               ),
             ),
