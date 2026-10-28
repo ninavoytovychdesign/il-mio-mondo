@@ -51,13 +51,13 @@ const Map<String, Map<String, String>> uiText = {
 
 // ---------- Sound books ----------
 /// Books hidden for now (no recorded sounds yet): 3 – the sea
-const Set<int> hiddenBooks = {3};
+const Set<int> hiddenBooks = {};
 
 const List<List<String>> books = [
   ['owl', 'wolf', 'woodpecker', 'bird'],
   ['cow', 'pig', 'horse', 'rooster', 'dog', 'cat'],
   ['music', 'piano', 'guitar', 'violin', 'tambourine', 'xylophone'],
-  ['whale', 'dolphin', 'shell', 'turtle', 'gull'],
+  ['whale', 'dolphin', 'shell', 'gull'],
   ['tractor', 'plane', 'car', 'boat', 'heli'],
 ];
 // Each book has its own light tint on the shelf: forest, farm, music, sea, transport
@@ -81,14 +81,14 @@ const Map<String, List<List<String>>> pageNames = {
     ['Il gufo', 'Il lupo', 'Il picchio', 'Gli uccellini'],
     ['La mucca', 'Il maiale', 'Il cavallo', 'Il gallo', 'Il cane', 'Il gatto'],
     ['Gli strumenti', 'Il pianoforte', 'La chitarra', 'Il violino', 'Il tamburello', 'Lo xilofono'],
-    ['La balena', 'Il delfino', 'La conchiglia', 'La tartaruga', 'Il gabbiano'],
+    ['La balena', 'Il delfino', 'La conchiglia', 'Il gabbiano'],
     ['Il trattore', "L'aereo", 'La macchina', 'La barca', "L'elicottero"],
   ],
   'uk': [
     ['Сова', 'Вовк', 'Дятел', 'Пташки'],
     ['Корова', 'Свинка', 'Конячка', 'Півник', 'Песик', 'Котик'],
     ['Інструменти', 'Піаніно', 'Гітара', 'Скрипка', 'Бубон', 'Ксилофон'],
-    ['Кит', 'Дельфін', 'Мушля', 'Черепаха', 'Чайка'],
+    ['Кит', 'Дельфін', 'Мушля', 'Чайка'],
     ['Трактор', 'Літак', 'Машинка', 'Кораблик', 'Вертоліт'],
   ],
 };
@@ -235,4 +235,4 @@ const Map<String, List<String>> monthNames = {
 };
 
 const String soundCredits =
-    "Lupo, picchio, gufo, uccellini, cane, gatto e acqua – registrazioni di Nina Voytovych. Mucca – calebmills99 (Freesound). Altri clip dal dataset ESC-50 (K. J. Piczak), da Freesound: maiale – felix.blume (CC0); gallo – pionium (CC Sampling+); aereo – daveincamas (CC BY); clacson – cinemafia (CC Sampling+); motore – Corsica_S (CC BY). Dataset CC BY-NC 3.0, solo uso non commerciale. Musica: Mozart, Beethoven, Vivaldi, Romanza (anonimo) – opere di pubblico dominio – e le note del Pianoforte, suonate con i campioni FluidR3_GM di Frank Wen (CC BY 3.0), via midi-js-soundfonts di B. Gleitzman. Carattere: Nunito di Vernon Adams (SIL Open Font License 1.1).";
+    "Lupo, picchio, gufo, uccellini, cane, gatto, delfino, balena, gabbiano e acqua – registrazioni di Nina Voytovych. Mucca – calebmills99 (Freesound). Altri clip dal dataset ESC-50 (K. J. Piczak), da Freesound: maiale – felix.blume (CC0); gallo – pionium (CC Sampling+); aereo – daveincamas (CC BY); clacson – cinemafia (CC Sampling+); motore – Corsica_S (CC BY). Dataset CC BY-NC 3.0, solo uso non commerciale. Musica: Mozart, Beethoven, Vivaldi, Romanza (anonimo) – opere di pubblico dominio – e le note del Pianoforte, suonate con i campioni FluidR3_GM di Frank Wen (CC BY 3.0), via midi-js-soundfonts di B. Gleitzman. Carattere: Nunito di Vernon Adams (SIL Open Font License 1.1).";
