@@ -90,8 +90,7 @@ class HomeScreen extends StatelessWidget {
       ),
       _SectionCard(
         color: const Color(0xFFF3EEF8),
-        image: '',
-        art: const PianoArt(),
+        image: 'piano_toy',
         title: s.tr('piano'),
         subtitle: s.tr('pianoSub'),
         onTap: () => _go(context, const PianoScreen()),
