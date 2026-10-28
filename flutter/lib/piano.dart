@@ -16,7 +16,9 @@ import 'pixels.dart';
 import 'ui.dart';
 
 const List<String> _notes = ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5'];
-const List<String> _animals = ['fox', 'owl', 'mouse', 'cow', 'pig', 'horse', 'rooster', 'whale'];
+const List<String> _animals = ['dog', 'owl', 'cat', 'cow', 'pig', 'horse', 'rooster', 'turtle'];
+// voices from assets/snd; the dog and the cat are waiting for Nina's own recordings (dog.mp3, cat.mp3)
+const Set<String> _withSound = {'owl', 'cow', 'pig', 'horse', 'rooster', 'turtle'};
 const List<Color> keyColors = [
   Color(0xFFEF6B5E), // red
   Color(0xFFF59A45), // orange
@@ -119,7 +121,11 @@ class _PianoScreenState extends State<PianoScreen> with SingleTickerProviderStat
     if (_animalsMode) {
       _lights.removeWhere((l) => l.animal);
       _lights.add(_Light(key, _now, animal: true));
-      Sound.instance.play(_animals[key]);
+      if (_withSound.contains(_animals[key])) {
+        Sound.instance.play(_animals[key]);
+      } else {
+        Sound.instance.stop();
+      }
     } else {
       _lights.add(_Light(key, _now));
       _pool.play(_notes[key]);
@@ -224,11 +230,7 @@ class _PianoScreenState extends State<PianoScreen> with SingleTickerProviderStat
           child: _animalsMode
               ? AspectRatio(
                   aspectRatio: 1,
-                  child: Container(
-                    padding: const EdgeInsets.all(5),
-                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
-                    child: CustomPaint(painter: _MiniPix(pixArt[_animals[i]]!)),
-                  ),
+                  child: Image.asset('assets/img/face_${_animals[i]}.webp', fit: BoxFit.contain, filterQuality: FilterQuality.medium),
                 )
               : null,
         ),
@@ -307,31 +309,6 @@ class _BoardPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_BoardPainter old) => true;
-}
-
-/// Small pixel animal on a key, so the child sees who lives there
-class _MiniPix extends CustomPainter {
-  _MiniPix(this.art);
-  final PixArt art;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final h = art.rows.length, w = art.rows.first.length;
-    final cell = math.min(size.width / w, size.height / h);
-    final ox = (size.width - cell * w) / 2, oy = (size.height - cell * h) / 2;
-    final p = Paint();
-    for (var y = 0; y < h; y++) {
-      for (var x = 0; x < w; x++) {
-        final ch = art.rows[y][x];
-        if (ch == '.') continue;
-        p.color = art.colors[ch]!;
-        canvas.drawRect(Rect.fromLTWH(ox + x * cell, oy + y * cell, cell + 0.4, cell + 0.4), p);
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(_MiniPix old) => old.art != art;
 }
 
 /// Picture for the child's home card: rainbow keys and a few lit columns
