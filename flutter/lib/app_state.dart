@@ -36,13 +36,13 @@ class Kid {
   Map<String, dynamic> toJson() => {'id': id, 'name': name, 'av': av, 'tint': tint, 'lang': lang, 'img': img, 'photo': photo, 'books': books};
   static Kid fromJson(Map<String, dynamic> j) => Kid(
         id: j['id'] as String,
-        name: j['name'] as String,
-        av: j['av'] as String,
-        tint: j['tint'] as int,
-        lang: j['lang'] as String,
-        img: j['img'] as bool,
+        name: (j['name'] as String?) ?? '',
+        av: (j['av'] as String?) ?? 'ostap',
+        tint: (j['tint'] as int?) ?? 0xFFE2F1EF,
+        lang: (j['lang'] as String?) ?? 'it',
+        img: (j['img'] as bool?) ?? true,
         photo: j['photo'] as String?,
-        books: (j['books'] as List?)?.map((e) => e as int).toList(),
+        books: (j['books'] as List?)?.whereType<int>().toList(),
       );
 }
 
@@ -62,8 +62,11 @@ class Sched {
         'bell': bell,
       };
   static Sched fromJson(Map<String, dynamic> j) => Sched(
-        [for (final s in (j['slots'] as List)) Slot((s as Map)['d'] as int, s['t'] as String)],
-        j['bell'] as bool,
+        [
+          for (final s in ((j['slots'] as List?) ?? const []))
+            if (s is Map && s['d'] is int && s['t'] is String) Slot(s['d'] as int, s['t'] as String),
+        ],
+        (j['bell'] as bool?) ?? false,
       );
 }
 
@@ -100,13 +103,16 @@ class RoutineDef {
         id: j['id'] as String,
         base: j['base'] as String?,
         name: j['name'] as String?,
-        cover: j['cover'] as String,
-        tint: j['tint'] as int,
+        cover: (j['cover'] as String?) ?? 'sun',
+        tint: (j['tint'] as int?) ?? 0xFFE9F3E5,
         therapy: (j['therapy'] as bool?) ?? false,
         who: j['who'] as String?,
         skipIf: (j['skipIf'] as List?)?.map((e) => e as String).toList(),
         hidden: (j['hidden'] as bool?) ?? false,
-        steps: [for (final s in (j['steps'] as List)) StepDef.fromJson(s as Map<String, dynamic>)],
+        steps: [
+          for (final s in ((j['steps'] as List?) ?? const []))
+            if (s is Map<String, dynamic> && s['img'] is String) StepDef.fromJson(s),
+        ],
       );
 
   static RoutineDef fromTemplate(Routine t, {String? id, bool hidden = false}) => RoutineDef(
@@ -184,7 +190,10 @@ class AppState extends ChangeNotifier {
       try {
         s._fromJson(jsonDecode(raw) as Map<String, dynamic>);
         loaded = true;
-      } catch (_) {}
+      } catch (_) {
+        // keep the unreadable save aside instead of losing it under the demo data
+        await prefs.setString('$_key.backup.${DateTime.now().millisecondsSinceEpoch}', raw);
+      }
     }
     if (!loaded && prefs.getBool(_wiped) != true) s._seedDemo();
     s._migrate();
@@ -232,12 +241,11 @@ class AppState extends ChangeNotifier {
     }
     _oldOrder.clear();
     _oldNames.clear();
-    // therapy routines got the blue communication book as their picture
-    for (final d in rdef.values) {
-      if ((d.base == 'logo' || d.base == 'fisio') && (d.cover == 'blocks' || d.cover == 'teddy')) d.cover = 'commbook';
-    }
-    // once: speech therapy gets the play table with puzzles
+    // once: therapy routines got the blue communication book, speech therapy the play table
     if (coverRev < 1) {
+      for (final d in rdef.values) {
+        if ((d.base == 'logo' || d.base == 'fisio') && (d.cover == 'blocks' || d.cover == 'teddy')) d.cover = 'commbook';
+      }
       for (final d in rdef.values) {
         if (d.base == 'logo' && d.cover == 'commbook') d.cover = 'appt_table';
       }
@@ -248,27 +256,62 @@ class AppState extends ChangeNotifier {
   final Map<String, List<int>> _oldOrder = {};
   final Map<String, List<String?>> _oldNames = {};
 
+  /// Reads the save section by section: a broken entry is skipped, never the whole file
   void _fromJson(Map<String, dynamic> j) {
-    kids = [for (final k in (j['kids'] as List)) Kid.fromJson(k as Map<String, dynamic>)];
-    sched = {
-      for (final e in (j['sched'] as Map<String, dynamic>).entries)
-        e.key: {for (final r in (e.value as Map<String, dynamic>).entries) r.key: Sched.fromJson(r.value as Map<String, dynamic>)},
-    };
-    progress = {for (final e in (j['progress'] as Map<String, dynamic>).entries) e.key: [for (final v in (e.value as List)) v == true]};
-    rorder = {for (final e in ((j['rorder'] as Map<String, dynamic>?) ?? {}).entries) e.key: [for (final v in (e.value as List)) v as String]};
-    rdef = {for (final e in ((j['rdef'] as Map<String, dynamic>?) ?? {}).entries) e.key: RoutineDef.fromJson(e.value as Map<String, dynamic>)};
-    for (final e in ((j['order'] as Map<String, dynamic>?) ?? {}).entries) {
-      _oldOrder[e.key] = [for (final v in (e.value as List)) v as int];
+    T part<T>(T Function() read, T fallback) {
+      try {
+        return read();
+      } catch (_) {
+        return fallback;
+      }
     }
-    for (final e in ((j['names'] as Map<String, dynamic>?) ?? {}).entries) {
-      _oldNames[e.key] = [for (final v in (e.value as List)) v as String?];
-    }
-    notes = [for (final n in (j['notes'] as List)) Note.fromJson(n as Map<String, dynamic>)];
-    simDay = (j['simDay'] as int?) ?? 0;
-    ui = (j['ui'] as String?) ?? 'it';
-    micOk = (j['micOk'] as bool?) ?? false;
-    coverRev = (j['coverRev'] as int?) ?? 0;
+
+    List<T> each<T>(Object? list, T Function(Map<String, dynamic>) read) => [
+          for (final x in (list is List ? list : const []))
+            if (x is Map<String, dynamic>) ...part(() => [read(x)], <T>[]),
+        ];
+
+    kids = each(j['kids'], Kid.fromJson);
+    if (kids.isEmpty && j['kids'] != null && (j['kids'] as List).isNotEmpty) throw const FormatException('kids');
+    sched = part(
+      () => {
+        for (final e in (j['sched'] as Map<String, dynamic>).entries)
+          e.key: {
+            for (final r in (e.value as Map<String, dynamic>).entries)
+              if (r.value is Map<String, dynamic>) ...part(() => {r.key: Sched.fromJson(r.value as Map<String, dynamic>)}, <String, Sched>{}),
+          },
+      },
+      {},
+    );
+    progress = part(() => {for (final e in (j['progress'] as Map<String, dynamic>).entries) e.key: [for (final v in (e.value as List)) v == true]}, {});
+    rorder = part(() => {for (final e in ((j['rorder'] as Map<String, dynamic>?) ?? {}).entries) e.key: [for (final v in (e.value as List)) v as String]}, {});
+    rdef = part(
+      () => {
+        for (final e in ((j['rdef'] as Map<String, dynamic>?) ?? {}).entries)
+          if (e.value is Map<String, dynamic>) ...part(() => {e.key: RoutineDef.fromJson(e.value as Map<String, dynamic>)}, <String, RoutineDef>{}),
+      },
+      {},
+    );
+    part<void>(() {
+      for (final e in ((j['order'] as Map<String, dynamic>?) ?? {}).entries) {
+        _oldOrder[e.key] = [for (final v in (e.value as List)) v as int];
+      }
+    }, null);
+    part<void>(() {
+      for (final e in ((j['names'] as Map<String, dynamic>?) ?? {}).entries) {
+        _oldNames[e.key] = [for (final v in (e.value as List)) v as String?];
+      }
+    }, null);
+    notes = each(j['notes'], Note.fromJson);
+    simDay = part(() => (j['simDay'] as int?) ?? 0, 0);
+    ui = part(() => (j['ui'] as String?) ?? 'it', 'it');
+    micOk = part(() => (j['micOk'] as bool?) ?? false, false);
+    coverRev = part(() => (j['coverRev'] as int?) ?? 0, 0);
+    momKid = part(() => j['momKid'] as String?, null);
   }
+
+  /// the child the parents' area shows (Oggi, Calendario, Diario, Routine)
+  String? momKid;
 
   /// which one-time cover updates were already applied
   int coverRev = 0;
@@ -283,6 +326,7 @@ class AppState extends ChangeNotifier {
         'simDay': simDay,
         'ui': ui,
         'coverRev': coverRev,
+        'momKid': momKid,
         'micOk': micOk,
       };
 
@@ -378,7 +422,9 @@ class AppState extends ChangeNotifier {
   }
 
   /// What the child sees: routines that are switched on and have steps
-  List<RoutineDef> childRoutines() => kidRoutines(kidId).where((r) => !r.hidden && r.steps.isNotEmpty).toList();
+  /// What the child sees in «La mia giornata»: today's routines (by the schedule), shown and not empty
+  List<RoutineDef> childRoutines() =>
+      [for (final x in routinesOn(kidId, today())) if (!x.r.hidden && x.r.steps.isNotEmpty) x.r];
 
   List<RoutineAt> routinesOn(String k, DateTime date) {
     final dw = dowOf(date);
@@ -584,6 +630,7 @@ class AppState extends ChangeNotifier {
     notes = [];
     simDay = 0;
     micOk = false;
+    momKid = null;
     kidId = '';
     cameFromChild = false;
     notifyListeners();

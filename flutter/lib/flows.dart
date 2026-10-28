@@ -314,12 +314,12 @@ class _Field extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        decoration: BoxDecoration(color: white ? Colors.white : C.surface, borderRadius: BorderRadius.circular(16)),
+        decoration: BoxDecoration(color: white ? Colors.white : C.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: C.line, width: 1.5)),
         child: TextField(
           controller: controller,
           maxLength: max,
           style: ts(18),
-          decoration: InputDecoration(border: InputBorder.none, counterText: '', hintText: hint, hintStyle: ts(18, w: FontWeight.w500, color: C.ink3)),
+          decoration: InputDecoration(border: InputBorder.none, counterText: '', hintText: hint, hintStyle: ts(18, w: FontWeight.w500, color: C.ink2)),
           onChanged: onChanged,
         ),
       );

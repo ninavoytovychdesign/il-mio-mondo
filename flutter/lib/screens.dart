@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -423,6 +424,8 @@ class _BookScreenState extends State<BookScreen> with _KeepAwake<BookScreen> {
   int _lastHit = 0;
   // swipe on the picture: the card follows the finger, a long or quick swipe turns the page
   int? _swipePointer;
+  Timer? _pendingTap;
+  PointerDownEvent? _pendingDown;
   double _downX = 0;
   int _downT = 0;
   double _dx = 0;
@@ -544,16 +547,36 @@ class _BookScreenState extends State<BookScreen> with _KeepAwake<BookScreen> {
           const SizedBox(height: 32),
           Expanded(
             child: Listener(
+              // the picture waits a moment before it sounds, so a swipe turns the page silently
               onPointerDown: (e) {
                 _swipeStart(e);
-                _hit(e, picture: true);
+                _pendingTap?.cancel();
+                _pendingDown = e;
+                _pendingTap = Timer(const Duration(milliseconds: 110), () {
+                  final d = _pendingDown;
+                  _pendingDown = null;
+                  if (d != null && !_dragging && mounted) _hit(d, picture: true);
+                });
               },
-              onPointerMove: _swipeMove,
+              onPointerMove: (e) {
+                _swipeMove(e);
+                if (_dragging) {
+                  _pendingTap?.cancel();
+                  _pendingDown = null;
+                }
+              },
               onPointerUp: (e) {
+                final d = _pendingDown;
+                final tapped = d != null && d.pointer == e.pointer && !_dragging;
+                _pendingTap?.cancel();
+                _pendingDown = null;
                 _swipeEnd(e);
+                if (tapped) _hit(d, picture: true);
                 _release(e);
               },
               onPointerCancel: (e) {
+                _pendingTap?.cancel();
+                _pendingDown = null;
                 _swipeEnd(e);
                 _release(e);
               },

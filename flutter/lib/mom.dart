@@ -235,7 +235,7 @@ class Toggle extends StatelessWidget {
             width: 64,
             height: 36,
             padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(color: on ? _action : const Color(0xFFB9C7BD), borderRadius: BorderRadius.circular(999)),
+            decoration: BoxDecoration(color: on ? _action : const Color(0xFF7A8A80), borderRadius: BorderRadius.circular(999)),
             child: AnimatedAlign(
               duration: const Duration(milliseconds: 150),
               alignment: on ? Alignment.centerRight : Alignment.centerLeft,
@@ -319,7 +319,19 @@ class _MomShellState extends State<MomShell> {
   String tab = 'oggi';
   _Sub sub = _Sub.none;
   String subId = '';
-  String momKid = 'ostap';
+  // the child shown in Oggi, Calendario, Diario and Routine – kept in the save, so it survives a restart
+  AppState get _st => context.getInheritedWidgetOfExactType<AppScope>()!.notifier!;
+  String get momKid {
+    final s = _st;
+    return s.momKid ?? (s.kids.isNotEmpty ? s.kids.first.id : '');
+  }
+
+  set momKid(String v) {
+    final s = _st;
+    if (s.momKid == v) return;
+    s.momKid = v;
+    s.save(notify: false);
+  }
   DateTime? calDate;
   final ScrollController _scroll = ScrollController();
 
@@ -664,7 +676,7 @@ class _MomShellState extends State<MomShell> {
           Box(title: s.longDate(sel), gap: 12, children: _dayRows(s, sel, appt: true)),
           Box(warm: true, title: s.l('Note del giorno', 'Нотатки дня'), gap: 12, children: [
             if (nn.isEmpty) emptyNote(s.l('Nessuna nota in questo giorno.', 'У цей день нотаток немає.')),
-            for (final n in nn) NoteItem(note: n),
+            for (final n in nn) NoteItem(key: ValueKey(n.id), note: n),
           ]),
         ),
         const SizedBox(height: 24),
@@ -689,7 +701,7 @@ class _MomShellState extends State<MomShell> {
         ]),
         Box(warm: true, title: s.l('Tutte le note', 'Усі нотатки'), gap: 12, children: [
           if (nn.isEmpty) emptyNote(s.l('Ancora nessuna nota.', 'Нотаток ще немає.')),
-          for (final n in nn) NoteItem(note: n, withDate: true),
+          for (final n in nn) NoteItem(key: ValueKey(n.id), note: n, withDate: true),
         ]),
         even: true,
       ),
@@ -1175,11 +1187,27 @@ class _NoteComposerState extends State<NoteComposer> {
   final TextEditingController _text = TextEditingController();
   AudioRecorder? _rec;
   bool _recording = false;
+  AppState? _state;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _state = AppScope.of(context);
+  }
 
   @override
   void dispose() {
+    final rec = _rec;
+    if (rec != null && _recording) {
+      // the parent left the screen while recording: keep what was said
+      final s = _state, kid = widget.kidId, date = widget.date, text = _text.text.trim();
+      rec.stop().then((path) {
+        if (path != null && s != null) s.addNote(kid, date, text, audio: path);
+      }).whenComplete(rec.dispose);
+    } else {
+      rec?.dispose();
+    }
     _text.dispose();
-    _rec?.dispose();
     super.dispose();
   }
 
@@ -1233,7 +1261,7 @@ class _NoteComposerState extends State<NoteComposer> {
     final s = AppScope.of(context);
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Container(
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: C.line, width: 1.5)),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         constraints: const BoxConstraints(minHeight: 120),
         child: TextField(
@@ -2009,7 +2037,7 @@ class _KidProfileState extends State<KidProfile> {
           width: isPhone(context) ? double.infinity : 240,
           height: 52,
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: C.line, width: 1.5)),
           child: Center(
             child: TextField(
               controller: _name,

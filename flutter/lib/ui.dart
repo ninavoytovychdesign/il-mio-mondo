@@ -19,10 +19,12 @@ class C {
   static const cardGreen = Color(0xFFF1F5F1);
   static const cardWarm = Color(0xFFF8F3EA);
   static const pGreen = Color(0xFFE9F3E5);
-  static const audio = Color(0xFF4A9FDB);
-  static const audioPlay = Color(0xFF3889C4);
+  static const audio = Color(0xFF3889C4);
+  static const audioPlay = Color(0xFF2E74A8);
   static const success = Color(0xFF2B8648);
-  static const ring = Color(0xFFCFC9BE);
+  /// borders of inputs and unselected chips: 3:1 on white
+  static const line = Color(0xFF7A8A80);
+  static const ring = Color(0xFF8E887C); // 3.5:1 on white – the child's lamp ring must be visible
 }
 
 const double rCard = 32;
