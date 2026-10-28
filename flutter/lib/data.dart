@@ -55,7 +55,7 @@ const Set<int> hiddenBooks = {3};
 
 const List<List<String>> books = [
   ['owl', 'wolf', 'woodpecker', 'bird'],
-  ['cow', 'pig', 'horse', 'rooster', 'dog'],
+  ['cow', 'pig', 'horse', 'rooster', 'dog', 'cat'],
   ['music', 'piano', 'guitar', 'violin', 'tambourine', 'xylophone'],
   ['whale', 'dolphin', 'shell', 'turtle', 'gull'],
   ['tractor', 'plane', 'car', 'boat', 'heli'],
@@ -79,14 +79,14 @@ const Map<String, List<String>> bookNames = {
 const Map<String, List<List<String>>> pageNames = {
   'it': [
     ['Il gufo', 'Il lupo', 'Il picchio', 'Gli uccellini'],
-    ['La mucca', 'Il maiale', 'Il cavallo', 'Il gallo', 'Il cane'],
+    ['La mucca', 'Il maiale', 'Il cavallo', 'Il gallo', 'Il cane', 'Il gatto'],
     ['Gli strumenti', 'Il pianoforte', 'La chitarra', 'Il violino', 'Il tamburello', 'Lo xilofono'],
     ['La balena', 'Il delfino', 'La conchiglia', 'La tartaruga', 'Il gabbiano'],
     ['Il trattore', "L'aereo", 'La macchina', 'La barca', "L'elicottero"],
   ],
   'uk': [
     ['Сова', 'Вовк', 'Дятел', 'Пташки'],
-    ['Корова', 'Свинка', 'Конячка', 'Півник', 'Песик'],
+    ['Корова', 'Свинка', 'Конячка', 'Півник', 'Песик', 'Котик'],
     ['Інструменти', 'Піаніно', 'Гітара', 'Скрипка', 'Бубон', 'Ксилофон'],
     ['Кит', 'Дельфін', 'Мушля', 'Черепаха', 'Чайка'],
     ['Трактор', 'Літак', 'Машинка', 'Кораблик', 'Вертоліт'],
