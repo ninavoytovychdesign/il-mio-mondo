@@ -523,30 +523,7 @@ class _BookScreenState extends State<BookScreen> with _KeepAwake<BookScreen> {
     final key = _pages[_page];
     final name = pageNames[s.lang]![widget.book][_page];
     final active = _pressed || _playing;
-    return Frame(
-      head: Head(
-        title: bookNames[s.lang]![widget.book],
-        onBack: () => _back(context),
-        trailing: Text.rich(TextSpan(children: [
-          TextSpan(text: '${_page + 1}', style: ts(20, color: C.ink)),
-          TextSpan(text: ' / ${_pages.length}', style: ts(20, color: C.ink2)),
-        ])),
-      ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              NavBtn(svg: Ic.back, round: false, label: s.tr('prevPage'), onTap: _page > 0 ? () => _turn(-1) : null),
-              const SizedBox(width: 16),
-              Expanded(child: Text(name, style: ts(isPhone(context) ? 26 : 36), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis)),
-              const SizedBox(width: 16),
-              NavBtn(svg: Ic.next, round: false, label: s.tr('nextPage'), onTap: _page < _pages.length - 1 ? () => _turn(1) : null),
-            ],
-          ),
-          const SizedBox(height: 32),
-          Expanded(
-            child: Listener(
+    final Widget pictureArea = Listener(
               // the picture waits a moment before it sounds, so a swipe turns the page silently
               onPointerDown: (e) {
                 _swipeStart(e);
@@ -608,11 +585,8 @@ class _BookScreenState extends State<BookScreen> with _KeepAwake<BookScreen> {
                   ),
                 ),
               ),
-            ),
-          ),
-          const SizedBox(height: 32),
-          Center(
-            child: Listener(
+            );
+    final Widget listenButton = Listener(
               onPointerDown: _hit,
               onPointerUp: _release,
               onPointerCancel: _release,
@@ -633,7 +607,43 @@ class _BookScreenState extends State<BookScreen> with _KeepAwake<BookScreen> {
                   child: Center(child: icon(Ic.listen, isPhone(context) ? 78 : 104, Colors.white)),
                 ),
               ),
-            ),
+            );
+    return Frame(
+      head: Head(
+        title: bookNames[s.lang]![widget.book],
+        onBack: () => _back(context),
+        trailing: Text.rich(TextSpan(children: [
+          TextSpan(text: '${_page + 1}', style: ts(20, color: C.ink)),
+          TextSpan(text: ' / ${_pages.length}', style: ts(20, color: C.ink2)),
+        ])),
+      ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              NavBtn(svg: Ic.back, round: false, label: s.tr('prevPage'), onTap: _page > 0 ? () => _turn(-1) : null),
+              const SizedBox(width: 16),
+              Expanded(child: Text(name, style: ts(isPhone(context) ? 26 : 36), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis)),
+              const SizedBox(width: 16),
+              NavBtn(svg: Ic.next, round: false, label: s.tr('nextPage'), onTap: _page < _pages.length - 1 ? () => _turn(1) : null),
+            ],
+          ),
+          const SizedBox(height: 32),
+          Expanded(
+            // standing tablet or phone: picture above, the button below;
+            // lying tablet: picture on the left, the big button on the right, easy to reach
+            child: isPortrait(context) || isPhone(context)
+                ? Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                    Expanded(child: pictureArea),
+                    const SizedBox(height: 32),
+                    Center(child: listenButton),
+                  ])
+                : Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                    Expanded(child: pictureArea),
+                    const SizedBox(width: 40),
+                    SizedBox(width: 280, child: Center(child: listenButton)),
+                  ]),
           ),
         ],
       ),
