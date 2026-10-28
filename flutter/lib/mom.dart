@@ -1139,7 +1139,7 @@ class _Player extends StatelessWidget {
             width: 64,
             height: 64,
             decoration: soft3d(C.success, circle: true),
-            foregroundDecoration: soft3dOverlay(circle: true),
+            foregroundDecoration: soft3dOverlay(circle: true, dark: true),
             child: Center(child: Padding(padding: const EdgeInsets.only(left: 3), child: icon(MI.play, 28, Colors.white))),
           ),
         ]),

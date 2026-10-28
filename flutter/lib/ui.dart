@@ -81,27 +81,63 @@ Widget picture(String key, {BoxFit fit = BoxFit.contain}) {
 }
 
 // ---------- Soft 3D surface ----------
-/// The soft 3D look: a light highlight along the top edge, a faint shade along the bottom
-/// and a small soft drop. Pressing moves it 1 px down and the drop disappears.
+/// The soft 3D look from the Figma components (Plain / Primary / Nav / Listen button):
+/// a thin light edge along the top, a thin shade along the bottom (inner shadows, no blur)
+/// and a small soft drop. Pressing moves it 1 px down, the drop disappears and the top gets a soft inner shade.
 BoxDecoration soft3d(Color color, {BorderRadius? radius, bool circle = false, bool pressed = false, bool flat = false}) => BoxDecoration(
       color: color,
       shape: circle ? BoxShape.circle : BoxShape.rectangle,
       borderRadius: circle ? null : radius,
+      boxShadow: (pressed || flat)
+          ? const []
+          : [BoxShadow(color: color.computeLuminance() < 0.4 ? const Color(0x332F5A3E) : const Color(0x1A3E4C43), blurRadius: 3, offset: const Offset(0, 1))],
     );
 
-BoxDecoration soft3dOverlay({BorderRadius? radius, bool circle = false, bool pressed = false}) => BoxDecoration(
-      shape: circle ? BoxShape.circle : BoxShape.rectangle,
-      borderRadius: circle ? null : radius,
-      // flat like the screens in Figma; only the pressed state gets a soft inner shade on top
-      gradient: pressed
-          ? const LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Color(0x293E4C43), Color(0x003E4C43), Color(0x003E4C43)],
-              stops: [0, 0.12, 1],
-            )
-          : null,
-    );
+/// The inner edges of [soft3d]. [dark] is for green / blue fills (a softer light edge, as in Figma).
+Decoration soft3dOverlay({BorderRadius? radius, bool circle = false, bool pressed = false, bool dark = false}) =>
+    _Soft3dEdges(radius: circle ? null : (radius ?? BorderRadius.zero), circle: circle, pressed: pressed, dark: dark);
+
+class _Soft3dEdges extends Decoration {
+  const _Soft3dEdges({required this.radius, required this.circle, required this.pressed, required this.dark});
+  final BorderRadius? radius;
+  final bool circle;
+  final bool pressed;
+  final bool dark;
+
+  @override
+  BoxPainter createBoxPainter([VoidCallback? onChanged]) => _Soft3dPainter(this);
+}
+
+class _Soft3dPainter extends BoxPainter {
+  _Soft3dPainter(this.d);
+  final _Soft3dEdges d;
+
+  @override
+  void paint(Canvas canvas, Offset offset, ImageConfiguration configuration) {
+    final size = configuration.size;
+    if (size == null || size.isEmpty) return;
+    final rect = offset & size;
+    Path shape(Offset shift) {
+      final r = rect.shift(shift);
+      return d.circle ? (Path()..addOval(r)) : (Path()..addRRect(d.radius!.toRRect(r)));
+    }
+
+    final body = shape(Offset.zero);
+    canvas.save();
+    canvas.clipPath(body);
+    if (d.pressed) {
+      // pressed: a soft shade from the top, like a dent
+      final p = Paint()..color = const Color(0x293E4C43)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
+      canvas.drawPath(Path.combine(PathOperation.difference, body, shape(const Offset(0, 3))), p);
+    } else {
+      // light edge on top: the shape minus itself moved 2 px down
+      canvas.drawPath(Path.combine(PathOperation.difference, body, shape(const Offset(0, 2))), Paint()..color = d.dark ? const Color(0x38FFFFFF) : const Color(0xB3FFFFFF));
+      // shade on the bottom: the shape minus itself moved 2 px up
+      canvas.drawPath(Path.combine(PathOperation.difference, body, shape(const Offset(0, -2))), Paint()..color = d.dark ? const Color(0x14000000) : const Color(0x123E4C43));
+    }
+    canvas.restore();
+  }
+}
 
 /// Generic pressable surface (buttons and cards)
 class Press extends StatefulWidget {
@@ -160,7 +196,7 @@ class _PressState extends State<Press> {
             padding: widget.padding,
             transform: Matrix4.translationValues(0, pressed ? 1 : 0, 0),
             decoration: soft3d(widget.color, radius: br, circle: widget.circle, pressed: pressed, flat: widget.flat || !enabled),
-            foregroundDecoration: widget.flat ? null : soft3dOverlay(radius: br, circle: widget.circle, pressed: pressed),
+            foregroundDecoration: widget.flat ? null : soft3dOverlay(radius: br, circle: widget.circle, pressed: pressed, dark: widget.color.computeLuminance() < 0.4),
             child: widget.child,
           ),
         ),
@@ -303,7 +339,7 @@ class DoneBadge extends StatelessWidget {
         width: size,
         height: size,
         decoration: soft3d(C.success, circle: true),
-        foregroundDecoration: soft3dOverlay(circle: true),
+        foregroundDecoration: soft3dOverlay(circle: true, dark: true),
         child: Center(child: icon(Ic.check, size * 0.58, Colors.white)),
       );
 }

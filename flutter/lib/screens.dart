@@ -629,7 +629,7 @@ class _BookScreenState extends State<BookScreen> with _KeepAwake<BookScreen> {
                     shape: BoxShape.circle,
                     boxShadow: _pressed ? const [] : const [BoxShadow(color: Color(0x382E628C), blurRadius: 6, offset: Offset(0, 2))],
                   ),
-                  foregroundDecoration: soft3dOverlay(circle: true, pressed: _pressed),
+                  foregroundDecoration: soft3dOverlay(circle: true, pressed: _pressed, dark: true),
                   child: Center(child: icon(Ic.listen, isPhone(context) ? 78 : 104, Colors.white)),
                 ),
               ),
