@@ -633,7 +633,8 @@ class _BookScreenState extends State<BookScreen> with _KeepAwake<BookScreen> {
           Expanded(
             // standing tablet or phone: picture above, the button below;
             // lying tablet: picture on the left, the big button on the right, easy to reach
-            child: isPortrait(context) || isPhone(context)
+            // any screen lying wide enough (also small tablets that count as phones) gets the side-by-side layout
+            child: isPortrait(context) || MediaQuery.sizeOf(context).width < 640
                 ? Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                     Expanded(child: pictureArea),
                     const SizedBox(height: 32),
