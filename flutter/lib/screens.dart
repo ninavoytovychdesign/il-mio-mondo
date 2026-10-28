@@ -120,13 +120,22 @@ class HomeScreen extends StatelessWidget {
             ],
           ),
         ),
-        body: portrait
-            ? Column(children: [
-                for (var i = 0; i < cards.length; i++) ...[if (i > 0) const SizedBox(height: 20), Expanded(child: cards[i])],
-              ])
-            : Row(children: [
-                for (var i = 0; i < cards.length; i++) ...[if (i > 0) const SizedBox(width: 24), Expanded(child: cards[i])],
-              ]),
+        // two cards in a row; two rows fit on the tablet screen, more rows scroll
+        body: LayoutBuilder(builder: (context, box) {
+          final phone = isPhone(context);
+          final cols = phone && portrait ? 1 : 2;
+          final gap = phone ? 16.0 : 24.0;
+          final rows = (cards.length / cols).ceil();
+          final fit = (box.maxHeight - gap * (math.min(rows, 2) - 1)) / math.min(rows, 2);
+          final h = math.max(fit, phone ? 220.0 : 260.0);
+          return GridView.builder(
+            padding: EdgeInsets.zero,
+            physics: rows * h + gap * (rows - 1) <= box.maxHeight + 1 ? const NeverScrollableScrollPhysics() : null,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: cols, mainAxisSpacing: gap, crossAxisSpacing: gap, mainAxisExtent: h),
+            itemCount: cards.length,
+            itemBuilder: (_, i) => cards[i],
+          );
+        }),
       ),
     );
   }
