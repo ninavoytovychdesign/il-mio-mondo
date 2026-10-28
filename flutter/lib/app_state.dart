@@ -251,6 +251,17 @@ class AppState extends ChangeNotifier {
       }
       coverRev = 1;
     }
+    // once: Natalina is on Thursday and Ilaria on Friday (the first template had them swapped).
+    // Only schedules still equal to the old template are changed, never one the parent edited.
+    if (coverRev < 2) {
+      String sig(Sched x) => [for (final sl in x.slots) '${sl.d}@${sl.t}'].join(',');
+      for (final m in sched.values) {
+        final logo = m['logo'], fisio = m['fisio'];
+        if (logo != null && sig(logo) == '5@08:30') logo.slots = [Slot(4, '09:15')];
+        if (fisio != null && sig(fisio) == '1@08:30,4@09:15') fisio.slots = [Slot(1, '08:30'), Slot(5, '08:30')];
+      }
+      coverRev = 2;
+    }
   }
 
   final Map<String, List<int>> _oldOrder = {};

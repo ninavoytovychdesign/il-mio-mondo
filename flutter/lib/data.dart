@@ -194,11 +194,12 @@ Map<String, dynamic> _s(List<int> d, String t, bool bell) => {
 Map<String, Map<String, dynamic>> defaultSchedule() => {
       'mattina': _s(_all, '07:15', true),
       'scuola': _s(_week, '08:00', true),
-      'logo': _s([5], '08:30', true),
+      // Natalina – Thursday, Ilaria – Monday and Friday
+      'logo': _s([4], '09:15', true),
       'fisio': {
         'slots': [
           {'d': 1, 't': '08:30'},
-          {'d': 4, 't': '09:15'},
+          {'d': 5, 't': '08:30'},
         ],
         'bell': true,
       },
