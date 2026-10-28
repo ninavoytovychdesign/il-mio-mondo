@@ -5,6 +5,7 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 
 import 'app_state.dart';
 import 'data.dart';
+import 'piano.dart';
 import 'ui.dart';
 
 void _go(BuildContext context, Widget screen) {
@@ -87,6 +88,14 @@ class HomeScreen extends StatelessWidget {
         subtitle: s.tr('daySub'),
         onTap: () => _go(context, const RoutinesScreen()),
       ),
+      _SectionCard(
+        color: const Color(0xFFF3EEF8),
+        image: '',
+        art: const PianoArt(),
+        title: s.tr('piano'),
+        subtitle: s.tr('pianoSub'),
+        onTap: () => _go(context, const PianoScreen()),
+      ),
     ];
     return PopScope(
       canPop: false,
@@ -113,17 +122,22 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
         body: portrait
-            ? Column(children: [Expanded(child: cards[0]), const SizedBox(height: 24), Expanded(child: cards[1])])
-            : Row(children: [Expanded(child: cards[0]), const SizedBox(width: 32), Expanded(child: cards[1])]),
+            ? Column(children: [
+                for (var i = 0; i < cards.length; i++) ...[if (i > 0) const SizedBox(height: 20), Expanded(child: cards[i])],
+              ])
+            : Row(children: [
+                for (var i = 0; i < cards.length; i++) ...[if (i > 0) const SizedBox(width: 24), Expanded(child: cards[i])],
+              ]),
       ),
     );
   }
 }
 
 class _SectionCard extends StatelessWidget {
-  const _SectionCard({required this.color, required this.image, required this.title, required this.subtitle, required this.onTap});
+  const _SectionCard({required this.color, required this.image, required this.title, required this.subtitle, required this.onTap, this.art});
   final Color color;
   final String image;
+  final Widget? art;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
@@ -140,7 +154,7 @@ class _SectionCard extends StatelessWidget {
               child: Container(
                 decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(rImg)),
                 clipBehavior: Clip.antiAlias,
-                child: picture(image),
+                child: art ?? picture(image),
               ),
             ),
             const SizedBox(height: 16),

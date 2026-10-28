@@ -1,0 +1,379 @@
+// PIANOFORTE – a toy piano for the child.
+// Eight wide rainbow keys; above them a board of soft square "lights".
+// «Note» mode: each key plays a note and a column of its colour rises and slowly fades.
+// «Animali» mode: each key shows a pixel animal on the board and plays its voice.
+// No flashing: lights come up and go down smoothly. Several fingers can play at once.
+import 'dart:math' as math;
+
+import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
+
+import 'app_state.dart';
+import 'pixels.dart';
+import 'ui.dart';
+
+const List<String> _notes = ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5'];
+const List<String> _animals = ['fox', 'owl', 'mouse', 'cow', 'pig', 'horse', 'rooster', 'whale'];
+const List<Color> keyColors = [
+  Color(0xFFEF6B5E), // red
+  Color(0xFFF59A45), // orange
+  Color(0xFFF5CD4C), // yellow
+  Color(0xFF7CC576), // green
+  Color(0xFF4FB8AE), // teal
+  Color(0xFF4A9FDB), // blue
+  Color(0xFF9B7FD8), // violet
+  Color(0xFFF08DB4), // pink
+];
+
+const int _cols = 16;
+const int _rows = 11;
+const Color _board = Color(0xFFF7F0E3);
+const Color _off = Color(0xFFEDE3D1);
+
+const String _icNote = r'<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 18.5a2.5 2.5 0 1 1-2.5-2.5H9V5l10-2v13" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="16.5" cy="16" r="2.5" stroke="currentColor" stroke-width="2.2"/></svg>';
+const String _icPaw = r'<svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><ellipse cx="7" cy="8.5" rx="2" ry="2.6"/><ellipse cx="12" cy="6.5" rx="2" ry="2.6"/><ellipse cx="17" cy="8.5" rx="2" ry="2.6"/><ellipse cx="4.5" cy="13.2" rx="1.8" ry="2.3"/><ellipse cx="19.5" cy="13.2" rx="1.8" ry="2.3"/><path d="M12 11.5c-3 0-6 3.6-6 6.2 0 1.7 1.4 2.3 3 2.3 1.2 0 2-.6 3-.6s1.8.6 3 .6c1.6 0 3-.6 3-2.3 0-2.6-3-6.2-6-6.2Z"/></svg>';
+
+/// Short notes, several at a time
+class _NotePool {
+  _NotePool() {
+    for (var i = 0; i < 6; i++) {
+      final p = AudioPlayer();
+      if (!kIsWeb) p.setPlayerMode(PlayerMode.lowLatency);
+      p.setReleaseMode(ReleaseMode.stop);
+      _players.add(p);
+    }
+  }
+  final List<AudioPlayer> _players = [];
+  int _next = 0;
+
+  void play(String note) {
+    final p = _players[_next];
+    _next = (_next + 1) % _players.length;
+    p.stop().then((_) => p.play(AssetSource('snd/note_$note.mp3'))).catchError((_) {});
+  }
+
+  void dispose() {
+    for (final p in _players) {
+      p.dispose();
+    }
+  }
+}
+
+class _Light {
+  _Light(this.key, this.start, {this.animal = false});
+  final int key;
+  final Duration start;
+  final bool animal;
+}
+
+class PianoScreen extends StatefulWidget {
+  const PianoScreen({super.key});
+
+  @override
+  State<PianoScreen> createState() => _PianoScreenState();
+}
+
+class _PianoScreenState extends State<PianoScreen> with SingleTickerProviderStateMixin {
+  bool _animalsMode = false;
+  final _pool = _NotePool();
+  final List<_Light> _lights = [];
+  final Map<int, int> _down = {}; // pointer → key
+  late final Ticker _ticker;
+  Duration _now = Duration.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    WakelockPlus.enable();
+    _ticker = createTicker((t) {
+      _now = t;
+      // lights that have fully faded are dropped; the ticker sleeps when nothing is lit
+      _lights.removeWhere((l) => _now - l.start > (l.animal ? _animalLife : _barLife));
+      setState(() {});
+      if (_lights.isEmpty) _ticker.stop();
+    });
+  }
+
+  @override
+  void dispose() {
+    _ticker.dispose();
+    _pool.dispose();
+    Sound.instance.stop(notify: false);
+    WakelockPlus.disable();
+    super.dispose();
+  }
+
+  static const _barLife = Duration(milliseconds: 1900);
+  static const _animalLife = Duration(milliseconds: 3600);
+
+  void _press(int pointer, int key) {
+    _down[pointer] = key;
+    if (!_ticker.isActive) {
+      _now = Duration.zero;
+      _lights.clear();
+      _ticker.start();
+    }
+    if (_animalsMode) {
+      _lights.removeWhere((l) => l.animal);
+      _lights.add(_Light(key, _now, animal: true));
+      Sound.instance.play(_animals[key]);
+    } else {
+      _lights.add(_Light(key, _now));
+      _pool.play(_notes[key]);
+    }
+    setState(() {});
+  }
+
+  void _lift(int pointer) {
+    if (_down.remove(pointer) != null) setState(() {});
+  }
+
+  void _setMode(bool animals) {
+    if (animals == _animalsMode) return;
+    Sound.instance.stop();
+    setState(() {
+      _animalsMode = animals;
+      _lights.clear();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = AppScope.of(context);
+    final phone = isPhone(context);
+    Widget modeBtn(bool animals, String svg, String label) {
+      final on = _animalsMode == animals;
+      return Semantics(
+        button: true,
+        selected: on,
+        label: label,
+        child: GestureDetector(
+          onTap: () => _setMode(animals),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            width: phone ? 52 : 64,
+            height: phone ? 52 : 64,
+            decoration: BoxDecoration(color: on ? C.success : C.nav, shape: BoxShape.circle),
+            child: Center(child: icon(svg, phone ? 26 : 32, on ? Colors.white : C.navInk)),
+          ),
+        ),
+      );
+    }
+
+    return Frame(
+      head: Head(
+        title: s.tr('piano'),
+        onBack: () {
+          Sound.instance.stop();
+          Navigator.of(context).maybePop();
+        },
+        trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+          modeBtn(false, _icNote, s.tr('pianoNotes')),
+          const SizedBox(width: 12),
+          modeBtn(true, _icPaw, s.tr('pianoAnimals')),
+        ]),
+      ),
+      body: Container(
+        padding: EdgeInsets.all(phone ? 12 : 20),
+        decoration: BoxDecoration(color: _board, borderRadius: BorderRadius.circular(rCard)),
+        child: Column(children: [
+          Expanded(
+            flex: 5,
+            child: CustomPaint(
+              size: Size.infinite,
+              painter: _BoardPainter(lights: List.of(_lights), now: _now),
+            ),
+          ),
+          SizedBox(height: phone ? 12 : 20),
+          Expanded(
+            flex: 4,
+            child: Row(children: [
+              for (var i = 0; i < 8; i++) ...[
+                if (i > 0) SizedBox(width: phone ? 6 : 10),
+                Expanded(child: _key(i)),
+              ],
+            ]),
+          ),
+        ]),
+      ),
+    );
+  }
+
+  Widget _key(int i) {
+    final pressed = _down.values.contains(i);
+    final c = keyColors[i];
+    return Listener(
+      onPointerDown: (e) => _press(e.pointer, i),
+      onPointerUp: (e) => _lift(e.pointer),
+      onPointerCancel: (e) => _lift(e.pointer),
+      child: Semantics(
+        button: true,
+        label: _animalsMode ? _animals[i] : _notes[i],
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 70),
+          transform: Matrix4.translationValues(0, pressed ? 4 : 0, 0),
+          decoration: BoxDecoration(
+            color: pressed ? Color.lerp(c, Colors.black, 0.08) : c,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(10), bottom: Radius.circular(22)),
+          ),
+          alignment: Alignment.bottomCenter,
+          padding: const EdgeInsets.all(8),
+          child: _animalsMode
+              ? AspectRatio(
+                  aspectRatio: 1,
+                  child: Container(
+                    padding: const EdgeInsets.all(5),
+                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+                    child: CustomPaint(painter: _MiniPix(pixArt[_animals[i]]!)),
+                  ),
+                )
+              : null,
+        ),
+      ),
+    );
+  }
+}
+
+/// Smooth 0…1…0 brightness of a cell that lights at [on] and starts fading at [off]
+double _glow(Duration now, int onMs, int offMs, int fadeMs) {
+  final t = now.inMilliseconds;
+  if (t < onMs) return 0;
+  if (t < onMs + 90) return (t - onMs) / 90;
+  if (t < offMs) return 1;
+  if (t < offMs + fadeMs) return 1 - (t - offMs) / fadeMs;
+  return 0;
+}
+
+class _BoardPainter extends CustomPainter {
+  _BoardPainter({required this.lights, required this.now});
+  final List<_Light> lights;
+  final Duration now;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const gap = 0.16; // part of a cell left as a gap
+    final cell = math.min(size.width / _cols, size.height / _rows);
+    final ox = (size.width - cell * _cols) / 2;
+    final oy = (size.height - cell * _rows) / 2;
+    final level = List.generate(_rows, (_) => List<double>.filled(_cols, 0));
+    final color = List.generate(_rows, (_) => List<Color>.filled(_cols, _off));
+
+    void lit(int r, int c, double v, Color col) {
+      if (r < 0 || r >= _rows || c < 0 || c >= _cols || v <= level[r][c]) return;
+      level[r][c] = v;
+      color[r][c] = col;
+    }
+
+    for (final l in lights) {
+      final t0 = l.start.inMilliseconds;
+      final rel = Duration(milliseconds: now.inMilliseconds);
+      if (l.animal) {
+        final art = pixArt[_animals[l.key]]!;
+        final h = art.rows.length, w = art.rows.first.length;
+        final r0 = (_rows - h) ~/ 2, c0 = (_cols - w) ~/ 2;
+        for (var y = 0; y < h; y++) {
+          for (var x = 0; x < w; x++) {
+            final ch = art.rows[y][x];
+            if (ch == '.') continue;
+            // the picture builds up from the bottom, row by row
+            final on = t0 + (h - 1 - y) * 45 + x * 6;
+            lit(r0 + y, c0 + x, _glow(rel, on, t0 + 2900, 600), art.colors[ch]!);
+          }
+        }
+      } else {
+        // a column of the key's colour: higher notes reach higher
+        final height = 4 + l.key;
+        for (var k = 0; k < height; k++) {
+          final on = t0 + k * 35;
+          final v = _glow(rel, on, t0 + 900 + k * 20, 800);
+          lit(_rows - 1 - k, l.key * 2, v, keyColors[l.key]);
+          lit(_rows - 1 - k, l.key * 2 + 1, v, keyColors[l.key]);
+        }
+      }
+    }
+
+    final paint = Paint();
+    for (var r = 0; r < _rows; r++) {
+      for (var c = 0; c < _cols; c++) {
+        paint.color = Color.lerp(_off, color[r][c], level[r][c])!;
+        final rect = Rect.fromLTWH(ox + c * cell + cell * gap / 2, oy + r * cell + cell * gap / 2, cell * (1 - gap), cell * (1 - gap));
+        canvas.drawRRect(RRect.fromRectAndRadius(rect, Radius.circular(cell * 0.18)), paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_BoardPainter old) => true;
+}
+
+/// Small pixel animal on a key, so the child sees who lives there
+class _MiniPix extends CustomPainter {
+  _MiniPix(this.art);
+  final PixArt art;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final h = art.rows.length, w = art.rows.first.length;
+    final cell = math.min(size.width / w, size.height / h);
+    final ox = (size.width - cell * w) / 2, oy = (size.height - cell * h) / 2;
+    final p = Paint();
+    for (var y = 0; y < h; y++) {
+      for (var x = 0; x < w; x++) {
+        final ch = art.rows[y][x];
+        if (ch == '.') continue;
+        p.color = art.colors[ch]!;
+        canvas.drawRect(Rect.fromLTWH(ox + x * cell, oy + y * cell, cell + 0.4, cell + 0.4), p);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_MiniPix old) => old.art != art;
+}
+
+/// Picture for the child's home card: rainbow keys and a few lit columns
+class PianoArt extends StatelessWidget {
+  const PianoArt({super.key});
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(builder: (context, box) {
+        return Padding(
+          padding: EdgeInsets.all(box.maxWidth * 0.08),
+          child: CustomPaint(size: Size.infinite, painter: _ArtPainter()),
+        );
+      });
+}
+
+class _ArtPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    const cols = 16, rows = 7;
+    final keyH = size.height * 0.36;
+    final boardH = size.height - keyH - size.height * 0.06;
+    final cell = math.min(size.width / cols, boardH / rows);
+    final ox = (size.width - cell * cols) / 2;
+    const heights = [2, 4, 3, 6, 5, 7, 4, 3];
+    final p = Paint();
+    for (var r = 0; r < rows; r++) {
+      for (var c = 0; c < cols; c++) {
+        final k = c ~/ 2;
+        final on = rows - r <= heights[k];
+        p.color = on ? keyColors[k] : _off;
+        final rect = Rect.fromLTWH(ox + c * cell + cell * 0.08, boardH - (rows - r) * cell + cell * 0.08, cell * 0.84, cell * 0.84);
+        canvas.drawRRect(RRect.fromRectAndRadius(rect, Radius.circular(cell * 0.18)), p);
+      }
+    }
+    final kw = (cell * cols - 7 * cell * 0.3) / 8;
+    for (var k = 0; k < 8; k++) {
+      p.color = keyColors[k];
+      final rect = Rect.fromLTWH(ox + k * (kw + cell * 0.3), size.height - keyH, kw, keyH);
+      canvas.drawRRect(RRect.fromRectAndCorners(rect, topLeft: Radius.circular(kw * 0.15), topRight: Radius.circular(kw * 0.15), bottomLeft: Radius.circular(kw * 0.3), bottomRight: Radius.circular(kw * 0.3)), p);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_ArtPainter old) => false;
+}

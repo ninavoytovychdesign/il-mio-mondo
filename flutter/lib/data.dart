@@ -15,6 +15,10 @@ const Map<String, Map<String, String>> uiText = {
     'booksSub': 'Animali, musica e suoni',
     'day': 'La mia giornata',
     'daySub': 'Le attività di oggi',
+    'piano': 'Pianoforte',
+    'pianoSub': 'Suona e guarda le luci',
+    'pianoNotes': 'Note',
+    'pianoAnimals': 'Animali',
     'finito': 'Finito!',
     'again': 'Ricomincia',
     'markDone': 'Segna come fatto',
@@ -32,6 +36,10 @@ const Map<String, Map<String, String>> uiText = {
     'booksSub': 'Тварини, музика і звуки',
     'day': 'Мій день',
     'daySub': 'Справи на сьогодні',
+    'piano': 'Піаніно',
+    'pianoSub': 'Грай і дивись на вогники',
+    'pianoNotes': 'Ноти',
+    'pianoAnimals': 'Тваринки',
     'finito': 'Готово!',
     'again': 'Почати знову',
     'markDone': 'Позначити виконаним',
@@ -224,4 +232,4 @@ const Map<String, List<String>> monthNames = {
 };
 
 const String soundCredits =
-    "Mucca – calebmills99 (Freesound). Altri clip dal dataset ESC-50 (K. J. Piczak), da Freesound: maiale – felix.blume (CC0); gallo – pionium (CC Sampling+); aereo – daveincamas (CC BY); clacson – cinemafia (CC Sampling+); motore – Corsica_S (CC BY); onde del mare – HerbertBoland (CC BY). Dataset CC BY-NC 3.0, solo uso non commerciale. Musica: Mozart, Beethoven, Vivaldi, Romanza (anonimo) – opere di pubblico dominio, suonate con i campioni FluidR3_GM di Frank Wen (CC BY 3.0), via midi-js-soundfonts di B. Gleitzman. Carattere: Nunito di Vernon Adams (SIL Open Font License 1.1).";
+    "Mucca – calebmills99 (Freesound). Altri clip dal dataset ESC-50 (K. J. Piczak), da Freesound: maiale – felix.blume (CC0); gallo – pionium (CC Sampling+); aereo – daveincamas (CC BY); clacson – cinemafia (CC Sampling+); motore – Corsica_S (CC BY); onde del mare – HerbertBoland (CC BY). Dataset CC BY-NC 3.0, solo uso non commerciale. Musica: Mozart, Beethoven, Vivaldi, Romanza (anonimo) – opere di pubblico dominio – e le note del Pianoforte, suonate con i campioni FluidR3_GM di Frank Wen (CC BY 3.0), via midi-js-soundfonts di B. Gleitzman. Carattere: Nunito di Vernon Adams (SIL Open Font License 1.1).";
