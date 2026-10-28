@@ -51,7 +51,7 @@ const Map<String, Map<String, String>> uiText = {
 
 // ---------- Sound books ----------
 const List<List<String>> books = [
-  ['fox', 'wolf', 'owl', 'woodpecker', 'bird'],
+  ['owl', 'wolf', 'woodpecker', 'bird'],
   ['cow', 'pig', 'horse', 'rooster'],
   ['music', 'piano', 'guitar', 'violin', 'tambourine', 'xylophone'],
   ['whale', 'dolphin', 'shell', 'turtle', 'gull'],
@@ -75,14 +75,14 @@ const Map<String, List<String>> bookNames = {
 };
 const Map<String, List<List<String>>> pageNames = {
   'it': [
-    ['La volpe', 'Il lupo', 'Il gufo', 'Il picchio', 'Gli uccellini'],
+    ['Il gufo', 'Il lupo', 'Il picchio', 'Gli uccellini'],
     ['La mucca', 'Il maiale', 'Il cavallo', 'Il gallo'],
     ['Gli strumenti', 'Il pianoforte', 'La chitarra', 'Il violino', 'Il tamburello', 'Lo xilofono'],
     ['La balena', 'Il delfino', 'La conchiglia', 'La tartaruga', 'Il gabbiano'],
     ['Il trattore', "L'aereo", 'La macchina', 'La barca', "L'elicottero"],
   ],
   'uk': [
-    ['Лисичка', 'Вовк', 'Сова', 'Дятел', 'Пташки'],
+    ['Сова', 'Вовк', 'Дятел', 'Пташки'],
     ['Корова', 'Свинка', 'Конячка', 'Півник'],
     ['Інструменти', 'Піаніно', 'Гітара', 'Скрипка', 'Бубон', 'Ксилофон'],
     ['Кит', 'Дельфін', 'Мушля', 'Черепаха', 'Чайка'],
