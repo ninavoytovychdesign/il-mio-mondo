@@ -4,15 +4,16 @@
 // «Animali» mode: each key shows a pixel animal on the board and plays its voice.
 // No flashing: lights come up and go down smoothly. Several fingers can play at once.
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import 'app_state.dart';
-import 'pixels.dart';
 import 'ui.dart';
 
 const List<String> _notes = ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5'];
@@ -30,8 +31,9 @@ const List<Color> keyColors = [
   Color(0xFFF08DB4), // pink
 ];
 
-const int _cols = 16;
-const int _rows = 11;
+// big cells: one column per key, so the child can follow what lights up
+const int _cols = 8;
+const int _rows = 7;
 const Color _board = Color(0xFFF7F0E3);
 const Color _off = Color(0xFFEDE3D1);
 
@@ -86,9 +88,23 @@ class _PianoScreenState extends State<PianoScreen> with SingleTickerProviderStat
   late final Ticker _ticker;
   Duration _now = Duration.zero;
 
+  final Map<String, ui.Image> _faces = {};
+
+  Future<void> _loadFaces() async {
+    for (final a in _animals) {
+      try {
+        final data = await rootBundle.load('assets/img/face_$a.webp');
+        final codec = await ui.instantiateImageCodec(data.buffer.asUint8List(), targetWidth: 512);
+        _faces[a] = (await codec.getNextFrame()).image;
+      } catch (_) {}
+    }
+    if (mounted) setState(() {});
+  }
+
   @override
   void initState() {
     super.initState();
+    _loadFaces();
     WakelockPlus.enable();
     _ticker = createTicker((t) {
       _now = t;
@@ -190,7 +206,7 @@ class _PianoScreenState extends State<PianoScreen> with SingleTickerProviderStat
             flex: 5,
             child: CustomPaint(
               size: Size.infinite,
-              painter: _BoardPainter(lights: List.of(_lights), now: _now),
+              painter: _BoardPainter(lights: List.of(_lights), now: _now, faces: _faces),
             ),
           ),
           SizedBox(height: phone ? 12 : 20),
@@ -250,18 +266,21 @@ double _glow(Duration now, int onMs, int offMs, int fadeMs) {
 }
 
 class _BoardPainter extends CustomPainter {
-  _BoardPainter({required this.lights, required this.now});
+  _BoardPainter({required this.lights, required this.now, required this.faces});
   final List<_Light> lights;
   final Duration now;
+  final Map<String, ui.Image> faces;
 
   @override
   void paint(Canvas canvas, Size size) {
-    const gap = 0.16; // part of a cell left as a gap
+    const gap = 0.12; // part of a cell left as a gap
     final cell = math.min(size.width / _cols, size.height / _rows);
     final ox = (size.width - cell * _cols) / 2;
     final oy = (size.height - cell * _rows) / 2;
     final level = List.generate(_rows, (_) => List<double>.filled(_cols, 0));
     final color = List.generate(_rows, (_) => List<Color>.filled(_cols, _off));
+    Rect cellRect(int r, int c) => Rect.fromLTWH(ox + c * cell + cell * gap / 2, oy + r * cell + cell * gap / 2, cell * (1 - gap), cell * (1 - gap));
+    RRect round(Rect r) => RRect.fromRectAndRadius(r, Radius.circular(cell * 0.16));
 
     void lit(int r, int c, double v, Color col) {
       if (r < 0 || r >= _rows || c < 0 || c >= _cols || v <= level[r][c]) return;
@@ -269,31 +288,18 @@ class _BoardPainter extends CustomPainter {
       color[r][c] = col;
     }
 
+    _Light? animal;
     for (final l in lights) {
       final t0 = l.start.inMilliseconds;
-      final rel = Duration(milliseconds: now.inMilliseconds);
       if (l.animal) {
-        final art = pixArt[_animals[l.key]]!;
-        final h = art.rows.length, w = art.rows.first.length;
-        final r0 = (_rows - h) ~/ 2, c0 = (_cols - w) ~/ 2;
-        for (var y = 0; y < h; y++) {
-          for (var x = 0; x < w; x++) {
-            final ch = art.rows[y][x];
-            if (ch == '.') continue;
-            // the picture builds up from the bottom, row by row
-            final on = t0 + (h - 1 - y) * 45 + x * 6;
-            lit(r0 + y, c0 + x, _glow(rel, on, t0 + 2900, 600), art.colors[ch]!);
-          }
-        }
-      } else {
-        // a column of the key's colour: higher notes reach higher
-        final height = 4 + l.key;
-        for (var k = 0; k < height; k++) {
-          final on = t0 + k * 35;
-          final v = _glow(rel, on, t0 + 900 + k * 20, 800);
-          lit(_rows - 1 - k, l.key * 2, v, keyColors[l.key]);
-          lit(_rows - 1 - k, l.key * 2 + 1, v, keyColors[l.key]);
-        }
+        animal = l;
+        continue;
+      }
+      // a column of the key's colour above the key: higher notes reach higher
+      final height = 1 + (l.key * (_rows - 1) / 7).round();
+      for (var k = 0; k < height; k++) {
+        final v = _glow(now, t0 + k * 45, t0 + 900 + k * 25, 800);
+        lit(_rows - 1 - k, l.key, v, keyColors[l.key]);
       }
     }
 
@@ -301,8 +307,33 @@ class _BoardPainter extends CustomPainter {
     for (var r = 0; r < _rows; r++) {
       for (var c = 0; c < _cols; c++) {
         paint.color = Color.lerp(_off, color[r][c], level[r][c])!;
-        final rect = Rect.fromLTWH(ox + c * cell + cell * gap / 2, oy + r * cell + cell * gap / 2, cell * (1 - gap), cell * (1 - gap));
-        canvas.drawRRect(RRect.fromRectAndRadius(rect, Radius.circular(cell * 0.18)), paint);
+        canvas.drawRRect(round(cellRect(r, c)), paint);
+      }
+    }
+
+    // the animal: its clay face appears tile by tile, from the bottom row up
+    final img = animal == null ? null : faces[_animals[animal.key]];
+    if (animal != null && img != null) {
+      final t0 = animal.start.inMilliseconds;
+      final side = cell * _rows; // a square picture as tall as the board
+      final pic = Rect.fromLTWH(ox + (cell * _cols - side) / 2, oy, side, side);
+      final sx = img.width / side, sy = img.height / side;
+      final p = Paint()..filterQuality = FilterQuality.medium;
+      for (var r = 0; r < _rows; r++) {
+        for (var c = 0; c < _cols; c++) {
+          final dst = cellRect(r, c);
+          final part = dst.intersect(pic);
+          if (part.width <= 0 || part.height <= 0) continue;
+          final v = _glow(now, t0 + (_rows - 1 - r) * 70 + c * 18, t0 + 2900, 600);
+          if (v <= 0) continue;
+          final src = Rect.fromLTWH((part.left - pic.left) * sx, (part.top - pic.top) * sy, part.width * sx, part.height * sy);
+          canvas.save();
+          canvas.clipRRect(round(dst));
+          p.color = Color.fromRGBO(255, 255, 255, v);
+          canvas.drawRRect(round(dst), Paint()..color = Color.lerp(_off, Colors.white, v)!);
+          canvas.drawImageRect(img, src, part, p);
+          canvas.restore();
+        }
       }
     }
   }
