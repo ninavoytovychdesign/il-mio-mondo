@@ -19,7 +19,7 @@ import 'ui.dart';
 const List<String> _notes = ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5'];
 const List<String> _animals = ['dog', 'owl', 'cat', 'cow', 'pig', 'horse', 'rooster', 'bird'];
 // voices from assets/snd; the dog and the cat are waiting for Nina's own recordings (dog.mp3, cat.mp3)
-const Set<String> _withSound = {'owl', 'cow', 'pig', 'horse', 'rooster', 'bird'};
+const Set<String> _withSound = {'dog', 'owl', 'cow', 'pig', 'horse', 'rooster', 'bird'};
 const List<Color> keyColors = [
   Color(0xFFEF6B5E), // red
   Color(0xFFF59A45), // orange
