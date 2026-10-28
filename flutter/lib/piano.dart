@@ -203,7 +203,7 @@ class _PianoScreenState extends State<PianoScreen> with SingleTickerProviderStat
         decoration: BoxDecoration(color: _board, borderRadius: BorderRadius.circular(rCard)),
         child: Column(children: [
           Expanded(
-            flex: 5,
+            flex: isPortrait(context) ? 7 : 5,
             child: CustomPaint(
               size: Size.infinite,
               painter: _BoardPainter(lights: List.of(_lights), now: _now, faces: _faces),
@@ -273,13 +273,14 @@ class _BoardPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    const gap = 0.12; // part of a cell left as a gap
-    final cell = math.min(size.width / _cols, size.height / _rows);
-    final ox = (size.width - cell * _cols) / 2;
-    final oy = (size.height - cell * _rows) / 2;
+    // cells fill the whole board, so every column stands right above its key
+    final cw = size.width / _cols, ch = size.height / _rows;
+    final g = math.min(cw, ch) * 0.12; // gap between cells
+    const ox = 0.0, oy = 0.0;
+    final cell = math.min(cw, ch);
     final level = List.generate(_rows, (_) => List<double>.filled(_cols, 0));
     final color = List.generate(_rows, (_) => List<Color>.filled(_cols, _off));
-    Rect cellRect(int r, int c) => Rect.fromLTWH(ox + c * cell + cell * gap / 2, oy + r * cell + cell * gap / 2, cell * (1 - gap), cell * (1 - gap));
+    Rect cellRect(int r, int c) => Rect.fromLTWH(ox + c * cw + g / 2, oy + r * ch + g / 2, cw - g, ch - g);
     RRect round(Rect r) => RRect.fromRectAndRadius(r, Radius.circular(cell * 0.16));
 
     void lit(int r, int c, double v, Color col) {
@@ -315,8 +316,8 @@ class _BoardPainter extends CustomPainter {
     final img = animal == null ? null : faces[_animals[animal.key]];
     if (animal != null && img != null) {
       final t0 = animal.start.inMilliseconds;
-      final side = cell * _rows; // a square picture as tall as the board
-      final pic = Rect.fromLTWH(ox + (cell * _cols - side) / 2, oy, side, side);
+      final side = math.min(size.width, size.height); // a square picture in the middle of the board
+      final pic = Rect.fromLTWH((size.width - side) / 2, (size.height - side) / 2, side, side);
       final sx = img.width / side, sy = img.height / side;
       final p = Paint()..filterQuality = FilterQuality.medium;
       for (var r = 0; r < _rows; r++) {
@@ -330,7 +331,6 @@ class _BoardPainter extends CustomPainter {
           canvas.save();
           canvas.clipRRect(round(dst));
           p.color = Color.fromRGBO(255, 255, 255, v);
-          canvas.drawRRect(round(dst), Paint()..color = Color.lerp(_off, Colors.white, v)!);
           canvas.drawImageRect(img, src, part, p);
           canvas.restore();
         }
