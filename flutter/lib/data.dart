@@ -50,6 +50,9 @@ const Map<String, Map<String, String>> uiText = {
 };
 
 // ---------- Sound books ----------
+/// Books hidden for now (no recorded sounds yet): 3 – the sea
+const Set<int> hiddenBooks = {3};
+
 const List<List<String>> books = [
   ['owl', 'wolf', 'woodpecker', 'bird'],
   ['cow', 'pig', 'horse', 'rooster'],

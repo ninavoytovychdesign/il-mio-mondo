@@ -762,7 +762,7 @@ class _MomShellState extends State<MomShell> {
                 _fact(s.l('Lingua dei giochi', 'Мова ігор'), k.lang == 'uk' ? 'Українська' : 'Italiano'),
                 _fact(s.l("Suono toccando l'immagine", 'Звук від дотику до картинки'), k.img ? s.l('Sì', 'Так') : s.l('No', 'Ні')),
                 _fact(s.l('Routine', 'Рутини'), '${s.kidRoutines(k.id).length}'),
-                _fact(s.l('Libri sonori', 'Звукові книжечки'), '${(k.books ?? books).length} ${s.l('visibili', 'видно')}'),
+                _fact(s.l('Libri sonori', 'Звукові книжечки'), '${(k.books ?? List<int>.generate(books.length, (i) => i)).where((i) => !hiddenBooks.contains(i)).length} ${s.l('visibili', 'видно')}'),
               ]),
             ),
             const SizedBox(height: 16),
@@ -2086,6 +2086,7 @@ class _KidProfileState extends State<KidProfile> {
           constraints: const BoxConstraints(maxWidth: 520),
           child: Wrap(spacing: 8, runSpacing: 8, children: [
             for (var i = 0; i < books.length; i++)
+              if (!hiddenBooks.contains(i))
               Semantics(
                 button: true,
                 selected: vis.contains(i),

@@ -335,7 +335,7 @@ class ShelfScreen extends StatelessWidget {
       body: LayoutBuilder(builder: (context, box) {
         const gap = 24.0;
         final cols = portrait ? 2 : 3;
-        final vis = s.kid.books ?? List<int>.generate(books.length, (i) => i);
+        final vis = (s.kid.books ?? List<int>.generate(books.length, (i) => i)).where((i) => i < books.length && !hiddenBooks.contains(i)).toList();
         final rows = math.max(1, (vis.length / cols).ceil());
         final w = ((box.maxWidth - gap * (cols - 1)) / cols).floorToDouble();
         final h = ((box.maxHeight - gap * (rows - 1)) / rows).floorToDouble();
