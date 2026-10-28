@@ -203,7 +203,7 @@ class _PianoScreenState extends State<PianoScreen> with SingleTickerProviderStat
         decoration: BoxDecoration(color: _board, borderRadius: BorderRadius.circular(rCard)),
         child: Column(children: [
           Expanded(
-            flex: isPortrait(context) ? 7 : 5,
+            flex: 5,
             child: CustomPaint(
               size: Size.infinite,
               painter: _BoardPainter(lights: List.of(_lights), now: _now, faces: _faces),
@@ -211,13 +211,28 @@ class _PianoScreenState extends State<PianoScreen> with SingleTickerProviderStat
           ),
           SizedBox(height: phone ? 12 : 20),
           Expanded(
-            flex: 4,
-            child: Row(children: [
-              for (var i = 0; i < 8; i++) ...[
-                if (i > 0) SizedBox(width: phone ? 6 : 10),
-                Expanded(child: _key(i)),
-              ],
-            ]),
+            flex: isPortrait(context) ? 6 : 4,
+            child: isPortrait(context)
+                // standing tablet: two rows of four wide keys, low notes on top
+                ? Column(children: [
+                    for (var row = 0; row < 2; row++) ...[
+                      if (row > 0) SizedBox(height: phone ? 8 : 12),
+                      Expanded(
+                        child: Row(children: [
+                          for (var i = row * 4; i < row * 4 + 4; i++) ...[
+                            if (i > row * 4) SizedBox(width: phone ? 8 : 12),
+                            Expanded(child: _key(i)),
+                          ],
+                        ]),
+                      ),
+                    ],
+                  ])
+                : Row(children: [
+                    for (var i = 0; i < 8; i++) ...[
+                      if (i > 0) SizedBox(width: phone ? 6 : 10),
+                      Expanded(child: _key(i)),
+                    ],
+                  ]),
           ),
         ]),
       ),
