@@ -262,6 +262,15 @@ class AppState extends ChangeNotifier {
       }
       coverRev = 3;
     }
+    // once: on therapy days Ostap goes to therapy AND to kindergarten, and he sees both cards.
+    // The old template hid the therapies from the child and dropped "Vado a scuola" on those days.
+    if (coverRev < 4) {
+      for (final d in rdef.values) {
+        if (d.base == 'scuola') d.skipIf = null;
+        if (d.base == 'logo' || d.base == 'fisio') d.hidden = false;
+      }
+      coverRev = 4;
+    }
   }
 
   final Map<String, List<int>> _oldOrder = {};
