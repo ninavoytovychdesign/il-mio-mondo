@@ -319,11 +319,43 @@ class _BoardPainter extends CustomPainter {
       }
     }
 
-    final paint = Paint();
+    // every cell is a little lamp: a round bulb that, when lit, glows from a bright centre
+    // and spills a soft halo of its colour around it
+    final rad = cell * 0.40;
+    final halo = Paint()..maskFilter = MaskFilter.blur(BlurStyle.normal, cell * 0.22);
+    final bulb = Paint();
+    final shine = Paint();
     for (var r = 0; r < _rows; r++) {
       for (var c = 0; c < _cols; c++) {
-        paint.color = Color.lerp(_off, color[r][c], level[r][c])!;
-        canvas.drawRRect(round(cellRect(r, c)), paint);
+        final o = cellRect(r, c).center;
+        final v = level[r][c];
+        final col = color[r][c];
+        // unlit glass: a soft warm bead, a little lighter at the top
+        bulb.shader = RadialGradient(
+          center: const Alignment(-0.3, -0.4),
+          radius: 0.9,
+          colors: const [Color(0xFFF7F0E4), _off, Color(0xFFDCCFB8)],
+          stops: const [0.0, 0.6, 1.0],
+        ).createShader(Rect.fromCircle(center: o, radius: rad));
+        canvas.drawCircle(o, rad, bulb);
+        if (v <= 0) continue;
+        // halo
+        halo.color = col.withOpacity(0.55 * v);
+        canvas.drawCircle(o, rad * 1.25, halo);
+        // the lit bulb: almost white in the middle, the key's colour towards the edge
+        bulb.shader = RadialGradient(
+          colors: [
+            Color.lerp(col, Colors.white, 0.85)!.withOpacity(v),
+            Color.lerp(col, Colors.white, 0.35)!.withOpacity(v),
+            col.withOpacity(v),
+            Color.lerp(col, Colors.black, 0.12)!.withOpacity(v),
+          ],
+          stops: const [0.0, 0.35, 0.8, 1.0],
+        ).createShader(Rect.fromCircle(center: o, radius: rad));
+        canvas.drawCircle(o, rad, bulb);
+        // a tiny reflection, like on glass
+        shine.color = Colors.white.withOpacity(0.7 * v);
+        canvas.drawCircle(o + Offset(-rad * 0.38, -rad * 0.4), rad * 0.16, shine);
       }
     }
 
