@@ -1,0 +1,14 @@
+Analyzing flutter...                                            
+
+warning • The URI 'package:flutter_lints/flutter.yaml' included in '/home/runner/work/il-mio-mondo/il-mio-mondo/flutter/analysis_options.yaml' can't be found when analyzing '/home/runner/work/il-mio-mondo/il-mio-mondo/flutter' • analysis_options.yaml:10:10 • include_file_not_found
+   info • 'onReorder' is deprecated and shouldn't be used. Use the onReorderItem callback instead. The onReorderItem callback adjusts the newIndex parameter for a removed item at the oldIndex. This feature was deprecated after v3.41.0-0.0.pre. Try replacing the use of the deprecated member with the replacement • lib/mom.dart:1718:13 • deprecated_member_use
+warning • Unused import: 'dart:ui'. Try removing the import directive • lib/piano.dart:7:8 • unused_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/piano.dart:341:26 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/piano.dart:346:49 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/piano.dart:347:49 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/piano.dart:348:17 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/piano.dart:349:49 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/piano.dart:355:36 • deprecated_member_use
+warning • A value for optional parameter 'art' isn't ever given. Try removing the unused parameter • lib/screens.dart:146:136 • unused_element_parameter
+
+10 issues found. (ran in 13.3s)
