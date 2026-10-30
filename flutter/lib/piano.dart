@@ -1,7 +1,7 @@
 // PIANOFORTE – a toy piano for the child.
 // Eight wide rainbow keys; above them a board of soft square "lights".
 // «Note» mode: each key plays a note and a column of its colour rises and slowly fades.
-// «Animali» mode: each key shows a pixel animal on the board and plays its voice.
+// «Classica» mode: each key plays a short classical melody, and its notes light up the board.
 // No flashing: lights come up and go down smoothly. Several fingers can play at once.
 import 'dart:math' as math;
 import 'dart:ui' as ui;
@@ -10,16 +10,32 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter/services.dart' show rootBundle;
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import 'app_state.dart';
 import 'ui.dart';
 
 const List<String> _notes = ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5'];
-const List<String> _animals = ['dog', 'owl', 'cat', 'cow', 'pig', 'horse', 'rooster', 'bird'];
-// voices from assets/snd; the dog and the cat are waiting for Nina's own recordings (dog.mp3, cat.mp3)
-const Set<String> _withSound = {'dog', 'owl', 'cat', 'cow', 'pig', 'horse', 'rooster', 'bird'};
+/// «Classica» mode: each key plays a short public-domain melody (rendered from the notes
+/// with the same piano samples). [notes] = pairs of (ms from start, board column 0–7).
+class _Piece {
+  const _Piece(this.snd, this.ms, this.it, this.uk, this.notes);
+  final String snd;
+  final int ms;
+  final String it, uk;
+  final List<int> notes;
+}
+
+const List<_Piece> _pieces = [
+  _Piece('cl_ode', 12380, 'Inno alla gioia – Beethoven', '«Ода до радості» – Бетховен', [50, 4, 410, 4, 770, 5, 1130, 7, 1489, 7, 1849, 5, 2209, 4, 2569, 2, 2929, 0, 3289, 0, 3649, 2, 4009, 4, 4369, 4, 4909, 2, 5089, 2, 5809, 4, 6169, 4, 6529, 5, 6890, 7, 7250, 7, 7610, 5, 7970, 4, 8330, 2, 8690, 0, 9049, 0, 9409, 2, 9769, 4, 10129, 2, 10669, 0, 10849, 0]),
+  _Piece('cl_twinkle', 14480, 'Ah vous dirai-je, maman – Mozart', '«Ah vous dirai-je, maman» – Моцарт', [50, 0, 390, 0, 730, 5, 1070, 5, 1410, 7, 1750, 7, 2090, 5, 2770, 4, 3110, 4, 3450, 3, 3790, 3, 4130, 2, 4470, 2, 4810, 0, 5489, 5, 5829, 5, 6169, 4, 6509, 4, 6849, 3, 7189, 3, 7529, 2, 8209, 0, 8549, 0, 8889, 5, 9229, 5, 9569, 7, 9909, 7, 10249, 5, 10929, 4, 11269, 4, 11609, 3, 11949, 3, 12289, 2, 12629, 2, 12969, 0]),
+  _Piece('cl_lullaby', 11280, 'Ninna nanna – Brahms', 'Колискова – Брамс', [50, 1, 260, 1, 470, 4, 1310, 1, 1520, 1, 1730, 4, 2570, 1, 2780, 4, 2989, 7, 3409, 6, 4040, 5, 4250, 5, 4670, 4, 5090, 0, 5300, 1, 5510, 2, 5930, 0, 6350, 0, 6560, 1, 6770, 2, 7609, 0, 7819, 2, 8029, 6, 8240, 5, 8450, 4, 8870, 6, 9290, 7]),
+  _Piece('cl_turca', 8480, 'Marcia turca – Mozart', '«Турецький марш» – Моцарт', [50, 1, 169, 0, 290, 0, 410, 0, 530, 2, 1010, 3, 1130, 2, 1250, 1, 1370, 2, 1490, 4, 1970, 4, 2090, 4, 2210, 3, 2330, 4, 2450, 7, 2570, 6, 2690, 5, 2810, 6, 2930, 7, 3050, 6, 3170, 5, 3290, 6, 3410, 7, 3890, 6, 4130, 7, 4370, 7, 4610, 6, 4850, 5, 5090, 6, 5330, 7, 5570, 6, 5810, 5, 6050, 6, 6290, 7, 6530, 6, 6770, 5, 7010, 4, 7250, 4]),
+  _Piece('cl_nacht', 8080, 'Piccola serenata notturna – Mozart', '«Маленька нічна серенада» – Моцарт', [50, 3, 500, 0, 650, 3, 1099, 0, 1249, 3, 1399, 0, 1549, 3, 1699, 5, 1849, 7, 2449, 6, 2899, 4, 3049, 6, 3499, 4, 3649, 6, 3799, 4, 3949, 2, 4099, 4, 4249, 0, 4849, 3, 4999, 3, 5149, 5, 5300, 4, 5450, 3, 5600, 3, 5750, 5, 5900, 4, 6050, 3, 6200, 5, 6350, 7, 6500, 5, 6650, 3]),
+  _Piece('cl_spring', 9180, 'La primavera – Vivaldi', '«Весна» – Вівальді', [50, 0, 310, 4, 570, 4, 830, 4, 1090, 2, 1220, 0, 1350, 7, 2130, 7, 2260, 5, 2389, 4, 2649, 4, 2909, 4, 3169, 2, 3299, 0, 3429, 7, 4209, 7, 4339, 5, 4469, 4, 4729, 5, 4859, 7, 4989, 5, 5249, 4, 5509, 2, 6289, 0, 6549, 4, 6809, 4, 7069, 4, 7329, 2, 7459, 0, 7589, 0]),
+  _Piece('cl_morning', 9500, 'Il mattino – Grieg', '«Ранок» – Гріг', [50, 5, 410, 3, 770, 2, 1130, 0, 1489, 2, 1849, 3, 2209, 5, 2569, 3, 2929, 2, 3289, 0, 3649, 2, 3829, 3, 4009, 2, 4189, 3, 4369, 5, 4729, 3, 5089, 5, 5449, 7, 5810, 3, 6170, 7, 6530, 5, 6890, 3, 7250, 2, 7610, 0]),
+  _Piece('cl_minuet', 11610, 'Minuetto in sol – Petzold', 'Менует соль мажор – Петцольд', [50, 4, 450, 1, 650, 2, 850, 3, 1050, 3, 1250, 4, 1650, 1, 2050, 1, 2449, 5, 2849, 3, 3050, 4, 3250, 5, 3450, 6, 3650, 7, 4050, 1, 4450, 1, 4850, 3, 5250, 4, 5450, 3, 5650, 3, 5850, 2, 6050, 3, 6450, 3, 6650, 3, 6850, 2, 7050, 1, 7250, 2, 7650, 3, 7850, 2, 8050, 1, 8250, 0, 8450, 1]),
+];
 const List<Color> keyColors = [
   Color(0xFFEF6B5E), // red
   Color(0xFFF59A45), // orange
@@ -38,7 +54,7 @@ const Color _board = Color(0xFFF7F0E3);
 const Color _off = Color(0xFFEDE3D1);
 
 const String _icNote = r'<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 18.5a2.5 2.5 0 1 1-2.5-2.5H9V5l10-2v13" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="16.5" cy="16" r="2.5" stroke="currentColor" stroke-width="2.2"/></svg>';
-const String _icPaw = r'<svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><ellipse cx="7" cy="8.5" rx="2" ry="2.6"/><ellipse cx="12" cy="6.5" rx="2" ry="2.6"/><ellipse cx="17" cy="8.5" rx="2" ry="2.6"/><ellipse cx="4.5" cy="13.2" rx="1.8" ry="2.3"/><ellipse cx="19.5" cy="13.2" rx="1.8" ry="2.3"/><path d="M12 11.5c-3 0-6 3.6-6 6.2 0 1.7 1.4 2.3 3 2.3 1.2 0 2-.6 3-.6s1.8.6 3 .6c1.6 0 3-.6 3-2.3 0-2.6-3-6.2-6-6.2Z"/></svg>';
+const String _icClassic = r'<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 18V6l11-2.5v12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 9.5l11-2.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="5.5" cy="18" r="2.5" fill="currentColor"/><circle cx="16.5" cy="15.5" r="2.5" fill="currentColor"/></svg>';
 
 /// Short notes, several at a time
 class _NotePool {
@@ -67,10 +83,10 @@ class _NotePool {
 }
 
 class _Light {
-  _Light(this.key, this.start, {this.animal = false});
+  _Light(this.key, this.start, {this.piece = false});
   final int key;
   final Duration start;
-  final bool animal;
+  final bool piece;
 }
 
 class PianoScreen extends StatefulWidget {
@@ -81,35 +97,21 @@ class PianoScreen extends StatefulWidget {
 }
 
 class _PianoScreenState extends State<PianoScreen> with SingleTickerProviderStateMixin {
-  bool _animalsMode = false;
+  bool _classicMode = false;
   final _pool = _NotePool();
   final List<_Light> _lights = [];
   final Map<int, int> _down = {}; // pointer → key
   late final Ticker _ticker;
   Duration _now = Duration.zero;
 
-  final Map<String, ui.Image> _faces = {};
-
-  Future<void> _loadFaces() async {
-    for (final a in _animals) {
-      try {
-        final data = await rootBundle.load('assets/img/face_$a.webp');
-        final codec = await ui.instantiateImageCodec(data.buffer.asUint8List(), targetWidth: 512);
-        _faces[a] = (await codec.getNextFrame()).image;
-      } catch (_) {}
-    }
-    if (mounted) setState(() {});
-  }
-
   @override
   void initState() {
     super.initState();
-    _loadFaces();
     WakelockPlus.enable();
     _ticker = createTicker((t) {
       _now = t;
       // lights that have fully faded are dropped; the ticker sleeps when nothing is lit
-      _lights.removeWhere((l) => _now - l.start > (l.animal ? _animalLife : _barLife));
+      _lights.removeWhere((l) => _now - l.start > (l.piece ? Duration(milliseconds: _pieces[l.key].ms + 1200) : _barLife));
       setState(() {});
       if (_lights.isEmpty) _ticker.stop();
     });
@@ -125,7 +127,6 @@ class _PianoScreenState extends State<PianoScreen> with SingleTickerProviderStat
   }
 
   static const _barLife = Duration(milliseconds: 1900);
-  static const _animalLife = Duration(milliseconds: 3600);
 
   void _press(int pointer, int key) {
     _down[pointer] = key;
@@ -134,14 +135,11 @@ class _PianoScreenState extends State<PianoScreen> with SingleTickerProviderStat
       _lights.clear();
       _ticker.start();
     }
-    if (_animalsMode) {
-      _lights.removeWhere((l) => l.animal);
-      _lights.add(_Light(key, _now, animal: true));
-      if (_withSound.contains(_animals[key])) {
-        Sound.instance.play(_animals[key]);
-      } else {
-        Sound.instance.stop();
-      }
+    if (_classicMode) {
+      // one melody at a time: a new key stops the one that is playing
+      _lights.removeWhere((l) => l.piece);
+      _lights.add(_Light(key, _now, piece: true));
+      Sound.instance.play(_pieces[key].snd);
     } else {
       _lights.add(_Light(key, _now));
       _pool.play(_notes[key]);
@@ -153,11 +151,11 @@ class _PianoScreenState extends State<PianoScreen> with SingleTickerProviderStat
     if (_down.remove(pointer) != null) setState(() {});
   }
 
-  void _setMode(bool animals) {
-    if (animals == _animalsMode) return;
+  void _setMode(bool classic) {
+    if (classic == _classicMode) return;
     Sound.instance.stop();
     setState(() {
-      _animalsMode = animals;
+      _classicMode = classic;
       _lights.clear();
     });
   }
@@ -166,14 +164,14 @@ class _PianoScreenState extends State<PianoScreen> with SingleTickerProviderStat
   Widget build(BuildContext context) {
     final s = AppScope.of(context);
     final phone = isPhone(context);
-    Widget modeBtn(bool animals, String svg, String label) {
-      final on = _animalsMode == animals;
+    Widget modeBtn(bool classic, String svg, String label) {
+      final on = _classicMode == classic;
       return Semantics(
         button: true,
         selected: on,
         label: label,
         child: GestureDetector(
-          onTap: () => _setMode(animals),
+          onTap: () => _setMode(classic),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 150),
             width: phone ? 52 : 64,
@@ -195,7 +193,7 @@ class _PianoScreenState extends State<PianoScreen> with SingleTickerProviderStat
         trailing: Row(mainAxisSize: MainAxisSize.min, children: [
           modeBtn(false, _icNote, s.tr('pianoNotes')),
           const SizedBox(width: 12),
-          modeBtn(true, _icPaw, s.tr('pianoAnimals')),
+          modeBtn(true, _icClassic, s.tr('pianoClassic')),
         ]),
       ),
       body: Container(
@@ -206,7 +204,7 @@ class _PianoScreenState extends State<PianoScreen> with SingleTickerProviderStat
             flex: 5,
             child: CustomPaint(
               size: Size.infinite,
-              painter: _BoardPainter(lights: List.of(_lights), now: _now, faces: _faces),
+              painter: _BoardPainter(lights: List.of(_lights), now: _now),
             ),
           ),
           SizedBox(height: phone ? 12 : 20),
@@ -248,7 +246,7 @@ class _PianoScreenState extends State<PianoScreen> with SingleTickerProviderStat
       onPointerCancel: (e) => _lift(e.pointer),
       child: Semantics(
         button: true,
-        label: _animalsMode ? _animals[i] : _notes[i],
+        label: _classicMode ? AppScope.of(context).l(_pieces[i].it, _pieces[i].uk) : _notes[i],
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 70),
           transform: Matrix4.translationValues(0, pressed ? 4 : 0, 0),
@@ -258,12 +256,7 @@ class _PianoScreenState extends State<PianoScreen> with SingleTickerProviderStat
           ),
           alignment: Alignment.bottomCenter,
           padding: const EdgeInsets.all(8),
-          child: _animalsMode
-              ? AspectRatio(
-                  aspectRatio: 1,
-                  child: Image.asset('assets/img/face_${_animals[i]}.webp', fit: BoxFit.contain, filterQuality: FilterQuality.medium),
-                )
-              : null,
+          child: _classicMode ? Opacity(opacity: 0.85, child: icon(_icClassic, 30, Colors.white)) : null,
         ),
       ),
     );
@@ -281,10 +274,9 @@ double _glow(Duration now, int onMs, int offMs, int fadeMs) {
 }
 
 class _BoardPainter extends CustomPainter {
-  _BoardPainter({required this.lights, required this.now, required this.faces});
+  _BoardPainter({required this.lights, required this.now});
   final List<_Light> lights;
   final Duration now;
-  final Map<String, ui.Image> faces;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -304,11 +296,19 @@ class _BoardPainter extends CustomPainter {
       color[r][c] = col;
     }
 
-    _Light? animal;
     for (final l in lights) {
       final t0 = l.start.inMilliseconds;
-      if (l.animal) {
-        animal = l;
+      if (l.piece) {
+        // the melody: each note lights a short column in its own colour, higher notes to the right
+        final n = _pieces[l.key].notes;
+        for (var i = 0; i + 1 < n.length; i += 2) {
+          final at = t0 + n[i], col = n[i + 1];
+          if (now.inMilliseconds < at) break;
+          final height = 1 + (col * (_rows - 1) / 7).round();
+          for (var k = 0; k < height; k++) {
+            lit(_rows - 1 - k, col, _glow(now, at + k * 30, at + 260 + k * 20, 550), keyColors[col]);
+          }
+        }
         continue;
       }
       // a column of the key's colour above the key: higher notes reach higher
@@ -361,30 +361,6 @@ class _BoardPainter extends CustomPainter {
       }
     }
 
-    // the animal: its clay face appears tile by tile, from the bottom row up
-    final img = animal == null ? null : faces[_animals[animal.key]];
-    if (animal != null && img != null) {
-      final t0 = animal.start.inMilliseconds;
-      final side = math.min(size.width, size.height); // a square picture in the middle of the board
-      final pic = Rect.fromLTWH((size.width - side) / 2, (size.height - side) / 2, side, side);
-      final sx = img.width / side, sy = img.height / side;
-      final p = Paint()..filterQuality = FilterQuality.medium;
-      for (var r = 0; r < _rows; r++) {
-        for (var c = 0; c < _cols; c++) {
-          final dst = cellRect(r, c);
-          final part = dst.intersect(pic);
-          if (part.width <= 0 || part.height <= 0) continue;
-          final v = _glow(now, t0 + (_rows - 1 - r) * 70 + c * 18, t0 + 2900, 600);
-          if (v <= 0) continue;
-          final src = Rect.fromLTWH((part.left - pic.left) * sx, (part.top - pic.top) * sy, part.width * sx, part.height * sy);
-          canvas.save();
-          canvas.clipRRect(round(dst));
-          p.color = Color.fromRGBO(255, 255, 255, v);
-          canvas.drawImageRect(img, src, part, p);
-          canvas.restore();
-        }
-      }
-    }
   }
 
   @override

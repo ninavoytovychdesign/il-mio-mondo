@@ -18,7 +18,7 @@ const Map<String, Map<String, String>> uiText = {
     'piano': 'Pianoforte',
     'pianoSub': 'Suona e guarda le luci',
     'pianoNotes': 'Note',
-    'pianoAnimals': 'Animali',
+    'pianoClassic': 'Classica',
     'finito': 'Finito!',
     'again': 'Ricomincia',
     'markDone': 'Segna come fatto',
@@ -39,7 +39,7 @@ const Map<String, Map<String, String>> uiText = {
     'piano': 'Піаніно',
     'pianoSub': 'Грай і дивись на вогники',
     'pianoNotes': 'Ноти',
-    'pianoAnimals': 'Тваринки',
+    'pianoClassic': 'Класика',
     'finito': 'Готово!',
     'again': 'Почати знову',
     'markDone': 'Позначити виконаним',
@@ -236,4 +236,4 @@ const Map<String, List<String>> monthNames = {
 };
 
 const String soundCredits =
-    "Lupo, picchio, gufo, uccellini, cane, gatto, cavallo, delfino, balena, gabbiano e acqua – registrazioni di Nina Voytovych. Mucca – calebmills99 (Freesound). Altri clip dal dataset ESC-50 (K. J. Piczak), da Freesound: maiale – felix.blume (CC0); gallo – pionium (CC Sampling+); aereo – daveincamas (CC BY); clacson – cinemafia (CC Sampling+); motore – Corsica_S (CC BY). Dataset CC BY-NC 3.0, solo uso non commerciale. Musica: Mozart, Beethoven, Vivaldi, Romanza (anonimo) – opere di pubblico dominio – e le note del Pianoforte, suonate con i campioni FluidR3_GM di Frank Wen (CC BY 3.0), via midi-js-soundfonts di B. Gleitzman. Carattere: Nunito di Vernon Adams (SIL Open Font License 1.1).";
+    "Lupo, picchio, gufo, uccellini, cane, gatto, cavallo, delfino, balena, gabbiano e acqua – registrazioni di Nina Voytovych. Mucca – calebmills99 (Freesound). Altri clip dal dataset ESC-50 (K. J. Piczak), da Freesound: maiale – felix.blume (CC0); gallo – pionium (CC Sampling+); aereo – daveincamas (CC BY); clacson – cinemafia (CC Sampling+); motore – Corsica_S (CC BY). Dataset CC BY-NC 3.0, solo uso non commerciale. Musica: Mozart, Beethoven, Vivaldi, Brahms, Grieg, Petzold, Romanza (anonimo) – opere di pubblico dominio – e le note del Pianoforte, suonate con i campioni FluidR3_GM di Frank Wen (CC BY 3.0), via midi-js-soundfonts di B. Gleitzman. Carattere: Nunito di Vernon Adams (SIL Open Font License 1.1).";
