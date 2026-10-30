@@ -10,7 +10,7 @@
 
 **Короткий опис** (76/80): Routine visive e libri sonori: la giornata del bambino, un passo alla volta.
 
-**Повний опис** (1715/4000):
+**Повний опис** (2104/4000):
 
 ```text
 Pasetto aiuta i bambini piccoli a capire come va la giornata. Ogni routine è una fila di immagini grandi: rifaccio il letto, lavo i denti, metto le scarpe. Quando un passo è fatto, il bambino lo tocca e si accende una lucina. Il tablet dice ad alta voce il nome di ogni passo.
@@ -18,6 +18,7 @@ Pasetto aiuta i bambini piccoli a capire come va la giornata. Ogni routine è un
 PER IL BAMBINO
 • La mia giornata – le routine con immagini 3D morbide e chiare
 • Libri sonori – animali del bosco, della fattoria e del mare, musica classica, mezzi di trasporto. Tocchi l'immagine, senti il suono e poi il nome
+• Pianoforte – otto tasti colorati e lucine che salgono con le note; nel modo «Classica» ogni tasto suona una breve melodia
 • Nessuna pubblicità, nessun acquisto, nessun link verso l'esterno
 • L'area genitori si apre solo tenendo premuto il lucchetto per 2 secondi
 
@@ -25,7 +26,7 @@ PER I GENITORI
 • Crea una routine da zero o da un modello, cambia l'ordine dei passi, aggiungi le tue foto
 • Giorni e orari per ogni routine, calendario della settimana, appuntamenti (per esempio logopedia o fisioterapia)
 • Promemoria tramite Google Calendar
-• Diario con note scritte e vocali
+• Diario con note scritte e vocali, tradotte tra italiano e ucraino direttamente sul dispositivo: genitori e terapisti si capiscono anche se parlano lingue diverse
 • Più profili: ogni bambino ha le sue routine e i suoi libri
 • Lingua italiana e ucraina, anche diversa per ogni bambino
 
@@ -33,7 +34,7 @@ CALMA E PREVEDIBILE
 Colori tenui, niente lampeggiamenti, suoni allo stesso volume. Le routine visive sono uno strumento usato spesso con bambini che hanno bisogno di sapere cosa succede dopo, per esempio bambini nello spettro autistico o con ritardo del linguaggio. Pasetto è nata da una mamma designer per suo figlio e per le terapie di ogni giorno.
 
 PRIVACY
-Nessun account, nessuna pubblicità, nessun dato inviato. Tutto resta sul dispositivo e si cancella con un tocco in Impostazioni.
+Nessun account, nessuna pubblicità. Routine, foto, diario e note vocali restano sul dispositivo e si cancellano con un tocco in Impostazioni. Solo se usi la traduzione del diario, Google ML Kit invia a Google dati tecnici di diagnostica (mai il testo delle note).
 
 Pasetto non è un dispositivo medico e non diagnostica, tratta, cura o previene alcuna condizione. Per consigli medici o terapeutici rivolgiti a un professionista.
 ```
@@ -44,7 +45,7 @@ Pasetto non è un dispositivo medico e non diagnostica, tratta, cura o previene 
 
 **Короткий опис** (61/80): Наочні рутини й звукові книжечки: день дитини крок за кроком.
 
-**Повний опис** (1540/4000):
+**Повний опис** (1958/4000):
 
 ```text
 Pasetto допомагає маленьким дітям зрозуміти, як мине день. Кожна рутина – це ряд великих картинок: застеляю ліжко, чищу зубки, взуваюся. Коли крок зроблено, дитина торкається його – і загоряється вогник. Планшет вголос називає кожен крок.
@@ -52,6 +53,7 @@ Pasetto допомагає маленьким дітям зрозуміти, я�
 ДЛЯ ДИТИНИ
 • Мій день – рутини з м'якими й зрозумілими 3D-картинками
 • Звукові книжечки – лісові, домашні й морські тварини, класична музика, транспорт. Торкаєшся картинки – чуєш звук, а потім назву
+• Піаніно – вісім кольорових клавіш і вогники, що піднімаються з нотами; у режимі «Класика» кожна клавіша грає коротку мелодію
 • Без реклами, покупок і посилань назовні
 • Батьківська зона відкривається, лише якщо утримувати замочок 2 секунди
 
@@ -59,7 +61,7 @@ Pasetto допомагає маленьким дітям зрозуміти, я�
 • Створюйте рутину з нуля або з шаблону, міняйте порядок кроків, додавайте свої фото
 • Дні й час для кожної рутини, календар на тиждень, візити (наприклад, до логопеда чи фізіотерапевта)
 • Нагадування через Google Календар
-• Щоденник із текстовими й голосовими нотатками
+• Щоденник із текстовими й голосовими нотатками, які перекладаються між українською та італійською просто на пристрої: батьки й терапевти розуміють одне одного, навіть якщо говорять різними мовами
 • Кілька профілів: у кожної дитини свої рутини й книжечки
 • Італійська й українська мови, для кожної дитини можна вибрати свою
 
@@ -67,7 +69,7 @@ Pasetto допомагає маленьким дітям зрозуміти, я�
 М'які кольори, жодного блимання, звуки однакової гучності. Наочні розклади часто використовують із дітьми, яким важливо знати, що буде далі, – наприклад, із дітьми з РАС чи із затримкою мовлення. Pasetto створила мама-дизайнерка для свого сина й щоденних терапій.
 
 ПРИВАТНІСТЬ
-Без акаунтів, без реклами, жодних даних не надсилається. Усе лишається на пристрої й видаляється одним дотиком у Налаштуваннях.
+Без акаунтів, без реклами. Рутини, фото, щоденник і голосові нотатки лишаються на пристрої й видаляються одним дотиком у Налаштуваннях. Лише коли ви користуєтеся перекладом щоденника, Google ML Kit надсилає в Google технічні дані діагностики (ніколи не текст нотаток).
 
 Pasetto не є медичним виробом і не діагностує, не лікує й не запобігає жодним станам. По медичну чи терапевтичну пораду звертайтеся до фахівця.
 ```
@@ -78,7 +80,7 @@ Pasetto не є медичним виробом і не діагностує, н
 
 **Короткий опис** (73/80): Visual routines and sound books: a child's day, one small step at a time.
 
-**Повний опис** (1582/4000):
+**Повний опис** (1973/4000):
 
 ```text
 Pasetto helps young children understand how their day will go. Each routine is a row of big pictures: make the bed, brush teeth, put on shoes. When a step is done, the child taps it and a little light turns on. The tablet says the name of every step out loud.
@@ -86,6 +88,7 @@ Pasetto helps young children understand how their day will go. Each routine is a
 FOR THE CHILD
 • My day – routines with soft, clear 3D pictures
 • Sound books – woodland, farm and sea animals, classical music, vehicles. Tap the picture, hear the sound, then the name
+• Piano – eight coloured keys and lights that rise with the notes; in «Classical» mode each key plays a short melody
 • No ads, no purchases, no links out of the app
 • The parents' area opens only by holding the lock for 2 seconds
 
@@ -93,7 +96,7 @@ FOR PARENTS
 • Create a routine from scratch or from a template, reorder steps, add your own photos
 • Days and times for each routine, a weekly calendar, appointments (for example speech therapy or physiotherapy)
 • Reminders through Google Calendar
-• A diary with written and voice notes
+• A diary with written and voice notes, translated between Italian and Ukrainian right on the device, so parents and therapists understand each other even without a shared language
 • Several profiles: each child has their own routines and books
 • Available in Italian and Ukrainian (no English yet), with a separate language for each child
 
@@ -101,7 +104,7 @@ CALM AND PREDICTABLE
 Soft colours, no flashing, sounds at the same volume. Visual schedules are often used with children who need to know what comes next, for example autistic children or children with speech delay. Pasetto was made by a designer mum for her son and his everyday therapies.
 
 PRIVACY
-No accounts, no ads, no data sent anywhere. Everything stays on the device and can be deleted with one tap in Settings.
+No accounts, no ads. Routines, photos, the diary and voice notes stay on the device and can be deleted with one tap in Settings. Only when you use diary translation, Google ML Kit sends Google technical diagnostic data (never the text of your notes).
 
 Pasetto is not a medical device and does not diagnose, treat, cure or prevent any condition. For medical or therapy advice, please consult a professional.
 ```
